@@ -12,21 +12,21 @@ import (
 )
 
 func main() {
-	//  NOTE: context
+	//  NOTE: setup context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	//  NOTE: logger
+	//  NOTE: setup logger
 	slogLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
 
-	//  NOTE: scheduler
+	//  NOTE: setup scheduler
 	scheduler, _ := quartz.NewStdScheduler(
 		quartz.WithLogger(quartzLogger),
 	)
 	scheduler.Start(ctx)
 
-	//  NOTE: signal's handler
+	//  NOTE: setup signal's handler
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
