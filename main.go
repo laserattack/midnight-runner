@@ -28,6 +28,13 @@ func main() {
 
 	//  NOTE: setup signal's handler
 	sigChan := make(chan os.Signal, 1)
+
+	// from https://pkg.go.dev/os#Signal:
+	// The only signal values guaranteed to be present in the os package
+	// on all systems are os.Interrupt (send the process an interrupt)
+	// and os.Kill (force the process to exit)
+
+	// but os.Kill can not be trapped
 	signal.Notify(sigChan, os.Interrupt)
 
 	//  NOTE: start jobs
