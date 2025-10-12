@@ -19,13 +19,8 @@ func (j *TimeoutShellJob) Execute(ctx context.Context) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, j.timeout)
 	defer cancel()
 
-	//  TODO: А умрут ли дочерние процессы по истечении таймаута?
-	// Проверить + пофиксить если что
+	//  TODO: Проверить умрут ли дочерние процессы по истечении таймаута?
 	err := j.shellJob.Execute(timeoutCtx)
-
-	if j.callback != nil {
-		j.callback(ctx, j.shellJob)
-	}
 
 	return err
 }

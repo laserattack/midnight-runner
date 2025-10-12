@@ -74,7 +74,7 @@ func main() {
 
 	//  NOTE: job options
 	opts := quartz.NewDefaultJobDetailOptions()
-	opts.MaxRetries = 0
+	opts.MaxRetries = 1
 	opts.RetryInterval = 1 * time.Second
 	opts.Replace = false
 	opts.Suspended = false
