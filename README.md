@@ -1,5 +1,9 @@
 # servant
 
+## Dependencies
+
+- [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
+
 ## Cron expression format
 
 | Field Name   | Mandatory | Allowed Values  | Allowed Special Characters |
