@@ -16,13 +16,15 @@ type TimeoutShellJob struct {
 }
 
 func (j *TimeoutShellJob) Execute(ctx context.Context) error {
+	if j.timeout <= 0 {
+		return j.shellJob.Execute(ctx)
+	}
+
 	timeoutCtx, cancel := context.WithTimeout(ctx, j.timeout)
 	defer cancel()
 
 	//  TODO: Проверить умрут ли дочерние процессы по истечении таймаута?
-	err := j.shellJob.Execute(timeoutCtx)
-
-	return err
+	return j.shellJob.Execute(timeoutCtx)
 }
 
 func (j *TimeoutShellJob) Description() string {

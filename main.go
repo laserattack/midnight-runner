@@ -5,8 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"servant/extjob"
 	"time"
+
+	"servant/extjob"
 
 	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/logger"
@@ -42,7 +43,7 @@ func main() {
 	//  NOTE: create jobs with timeout
 	command := "sleep 4"
 	cronTrigger, _ := quartz.NewCronTrigger("*/10 * * * * *")
-	timeout := 2 * time.Second
+	timeout := -2 * time.Second
 
 	shellJob := extjob.NewShellJobWithCallbackAndTimeout(
 		command,
