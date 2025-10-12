@@ -5,9 +5,8 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"time"
-
 	"servant/extjob"
+	"time"
 
 	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/logger"
