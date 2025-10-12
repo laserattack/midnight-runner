@@ -37,32 +37,42 @@ func main() {
 	// but os.Kill can not be trapped
 	signal.Notify(sigChan, os.Interrupt)
 
-	//  NOTE: start jobs
-	cronTrigger, _ := quartz.NewCronTrigger("*/5 * * * * *")
-	shellJob := job.NewShellJobWithCallback("ls -la",
+	//  NOTE: create jobs
+	command := "timeout 2 sleep 4"
+	cronTrigger, _ := quartz.NewCronTrigger("*/20 * * * * *")
+	shellJob := job.NewShellJobWithCallback(command,
 		func(ctx context.Context, j *job.ShellJob) {
 			status := j.JobStatus()
 			switch status {
 			case job.StatusOK:
 				quartzLogger.Info("Command completed successfully",
-					"command", "ls -la",
+					"command", command,
 					"exit_code", j.ExitCode(),
 					//"stdout", j.Stdout(),
 				)
 			case job.StatusFailure:
 				quartzLogger.Error("Command failed",
-					"command", "ls -la",
+					"command", command,
 					"exit_code", j.ExitCode(),
-					"stderr", j.Stderr(),
+					//"stderr", j.Stderr(),
 				)
 			}
 		},
 	)
+	//  NOTE: job options
+	opts := quartz.NewDefaultJobDetailOptions()
+	opts.MaxRetries = 2
+	opts.RetryInterval = 1
+	opts.Replace = false
+	opts.Suspended = false
 
-	_ = scheduler.ScheduleJob(
-		quartz.NewJobDetail(shellJob, quartz.NewJobKey("shellJob")),
-		cronTrigger,
+	jobDetail := quartz.NewJobDetailWithOptions(
+		shellJob,
+		quartz.NewJobKey("shellJob"),
+		opts,
 	)
+	//  NOTE: start jobs
+	_ = scheduler.ScheduleJob(jobDetail, cronTrigger)
 
 	//  NOTE: shutdown
 	<-sigChan
