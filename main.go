@@ -5,10 +5,12 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/logger"
 	"github.com/reugn/go-quartz/quartz"
+	"quartzui/extjob"
 )
 
 func main() {
@@ -37,10 +39,13 @@ func main() {
 	// but os.Kill can not be trapped
 	signal.Notify(sigChan, os.Interrupt)
 
-	//  NOTE: create jobs
-	command := "timeout 2 sleep 4"
-	cronTrigger, _ := quartz.NewCronTrigger("*/20 * * * * *")
-	shellJob := job.NewShellJobWithCallback(command,
+	//  NOTE: create jobs with timeout
+	command := "sleep 4"
+	cronTrigger, _ := quartz.NewCronTrigger("*/10 * * * * *")
+
+	shellJob := extjob.NewShellJobWithCallbackAndTimeout(
+		command,
+		2*time.Second,
 		func(ctx context.Context, j *job.ShellJob) {
 			status := j.JobStatus()
 			switch status {
@@ -48,21 +53,28 @@ func main() {
 				quartzLogger.Info("Command completed successfully",
 					"command", command,
 					"exit_code", j.ExitCode(),
-					//"stdout", j.Stdout(),
 				)
 			case job.StatusFailure:
-				quartzLogger.Error("Command failed",
-					"command", command,
-					"exit_code", j.ExitCode(),
-					//"stderr", j.Stderr(),
-				)
+				select {
+				case <-ctx.Done():
+					quartzLogger.Error("Command timeout exceeded",
+						"command", command,
+						"exit_code", j.ExitCode(),
+					)
+				default:
+					quartzLogger.Error("Command failed",
+						"command", command,
+						"exit_code", j.ExitCode(),
+					)
+				}
 			}
 		},
 	)
+
 	//  NOTE: job options
 	opts := quartz.NewDefaultJobDetailOptions()
-	opts.MaxRetries = 2
-	opts.RetryInterval = 1
+	opts.MaxRetries = 0
+	opts.RetryInterval = 1 * time.Second
 	opts.Replace = false
 	opts.Suspended = false
 
@@ -71,6 +83,7 @@ func main() {
 		quartz.NewJobKey("shellJob"),
 		opts,
 	)
+
 	//  NOTE: start jobs
 	_ = scheduler.ScheduleJob(jobDetail, cronTrigger)
 
