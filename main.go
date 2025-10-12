@@ -43,10 +43,11 @@ func main() {
 	//  NOTE: create jobs with timeout
 	command := "sleep 4"
 	cronTrigger, _ := quartz.NewCronTrigger("*/10 * * * * *")
+	timeout := 2 * time.Second
 
 	shellJob := extjob.NewShellJobWithCallbackAndTimeout(
 		command,
-		2*time.Second,
+		timeout,
 		func(ctx context.Context, j *job.ShellJob) {
 			status := j.JobStatus()
 			switch status {
