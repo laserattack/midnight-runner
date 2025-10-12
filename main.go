@@ -7,10 +7,11 @@ import (
 	"os/signal"
 	"time"
 
+	"servant/extjob"
+
 	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/logger"
 	"github.com/reugn/go-quartz/quartz"
-	"quartzui/extjob"
 )
 
 func main() {
