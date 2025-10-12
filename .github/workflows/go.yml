@@ -5,8 +5,9 @@ name: Go
 
 on:
   push:
-    branches: [ "main" ]
-    
+    branches:
+      - '**'
+
 jobs:
 
   build:
