@@ -11,7 +11,7 @@ const jsonData = `{
 	"version": "1.1",
 	"metadata": {
 		"created_at": 123,
-		"update_at": 123
+		"updated_at": 123
 	},
 	"jobs": {
 		"shellJob": {
