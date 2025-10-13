@@ -20,7 +20,7 @@ const jsonData = `{
 			"config": {
 				"command": "ls -la",
 				"expression": "*/5 * * * * *",
-				"status": "enable",
+				"stats": "enable",
 				"timeout": 10,
 				"max_retries": 0,
 				"retry_interval": 1
