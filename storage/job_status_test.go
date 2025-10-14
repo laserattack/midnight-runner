@@ -28,6 +28,11 @@ func TestJobStatusJSONUnmarshal(t *testing.T) {
 			expected:  StatusActive,
 		},
 		{
+			name:      "inactive status",
+			jsonInput: `"inactive"`,
+			expected:  StatusInactive,
+		},
+		{
 			name:        "invalid status",
 			jsonInput:   `"invalid"`,
 			expectError: true,
@@ -96,6 +101,11 @@ func TestJobStatusJSONMarshal(t *testing.T) {
 			status:   StatusActive,
 			expected: `"active"`,
 		},
+		{
+			name:     "inactive status",
+			status:   StatusInactive,
+			expected: `"inactive"`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -113,7 +123,12 @@ func TestJobStatusJSONMarshal(t *testing.T) {
 }
 
 func TestJobStatusJSONRoundTrip(t *testing.T) {
-	tests := []JobStatus{StatusEnable, StatusDisable, StatusActive}
+	tests := []JobStatus{
+		StatusEnable,
+		StatusDisable,
+		StatusActive,
+		StatusInactive,
+	}
 
 	for _, original := range tests {
 		t.Run(original.String(), func(t *testing.T) {
