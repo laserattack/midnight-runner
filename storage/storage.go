@@ -4,44 +4,19 @@ package storage
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"sync"
 )
 
-type JobStatus string
+// A mutex for safe operation with a database stored on disk
+var fileMutex sync.RWMutex
 
-const (
-	StatusEnable  JobStatus = "enable"
-	StatusDisable JobStatus = "disable"
-	StatusActive  JobStatus = "active"
-)
-
-type JobType string
-
-const (
-	TypeShell JobType = "shell"
-)
+//  NOTE: Database, metadata
 
 type Metadata struct {
 	CreatedAt int64 `json:"created_at"`
 	UpdatedAt int64 `json:"updated_at"`
 }
-
-type JobConfig struct {
-	Command       string    `json:"command"`
-	Expression    string    `json:"expression"`
-	Status        JobStatus `json:"status"`
-	Timeout       int       `json:"timeout"`
-	MaxRetries    int       `json:"max_retries"`
-	RetryInterval int       `json:"retry_interval"`
-}
-
-type Job struct {
-	Type        JobType   `json:"type"`
-	Description string    `json:"description"`
-	Config      JobConfig `json:"config"`
-	Metadata    Metadata  `json:"metadata"`
-}
-
-type Jobs map[string]Job
 
 type Database struct {
 	Version  string   `json:"version"`
@@ -49,17 +24,60 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
+//  NOTE: Serialize storage structure in byte array
+
 func (db *Database) Serialize() ([]byte, error) {
 	return json.MarshalIndent(db, "", "    ")
 }
 
+//  NOTE: Deserialize byte array in storage structure
+
 func Deserialize(data []byte) (*Database, error) {
 	var db Database
+
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
+
 	err := decoder.Decode(&db)
 	if err != nil {
 		return nil, err
 	}
+
 	return &db, nil
+}
+
+//  NOTE: Load database from file
+
+func LoadFromFile(filename string) (*Database, error) {
+	fileMutex.RLock()
+	defer fileMutex.RUnlock()
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return Deserialize(data)
+}
+
+//  NOTE: Save database to file
+
+func SaveToFile(db *Database, filename string) error {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	data, err := db.Serialize()
+	if err != nil {
+		return err
+	}
+
+	// Write to temporary file first
+	tmpFilename := filename + ".tmp"
+	err = os.WriteFile(tmpFilename, data, 0o644)
+	if err != nil {
+		return err
+	}
+
+	// Rename temporary file to actual file (atomic operation)
+	return os.Rename(tmpFilename, filename)
 }

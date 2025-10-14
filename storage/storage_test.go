@@ -1,171 +1,111 @@
 package storage
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
 )
 
-const jsonData = `{
-	"version": "1.1",
-	"metadata": {
-		"created_at": 123,
-		"updated_at": 123
-	},
-	"jobs": {
-		"shellJob": {
-			"type": "shell",
-			"description": "List directory contents every 5 seconds",
-			"config": {
-				"command": "ls -la",
-				"expression": "*/5 * * * * *",
-				"status": "enable",
-				"timeout": 10,
-				"max_retries": 0,
-				"retry_interval": 1
+func TestStorageJSONRountTrip(t *testing.T) {
+	tests := []struct {
+		name        string
+		database    *Database
+		expectError bool
+	}{
+		{
+			name: "database with jobs",
+			database: &Database{
+				Version: "1.0.0",
+				Metadata: Metadata{
+					CreatedAt: time.Now().Unix(),
+					UpdatedAt: time.Now().Unix(),
+				},
+				Jobs: Jobs{
+					"job1": {
+						Type:        TypeShell,
+						Description: "Test job 1",
+						Config: JobConfig{
+							Command:       "echo hello",
+							Expression:    "* * * * *",
+							Status:        StatusEnable,
+							Timeout:       30,
+							MaxRetries:    3,
+							RetryInterval: 10,
+						},
+						Metadata: Metadata{
+							CreatedAt: time.Now().Unix(),
+							UpdatedAt: time.Now().Unix(),
+						},
+					},
+					"job2": {
+						Type:        TypeShell,
+						Description: "Test job 2",
+						Config: JobConfig{
+							Command:       "echo world",
+							Expression:    "0 * * * *",
+							Status:        StatusDisable,
+							Timeout:       60,
+							MaxRetries:    5,
+							RetryInterval: 5,
+						},
+						Metadata: Metadata{
+							CreatedAt: time.Now().Unix(),
+							UpdatedAt: time.Now().Unix(),
+						},
+					},
+				},
 			},
-			"metadata": {
-				"created_at": 123,
-				"updated_at": 123
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := tt.database.Serialize()
+			if err != nil {
+				t.Fatalf("Serialize failed: %v", err)
 			}
-		}
-	}
-}`
 
-func TestSerialize(t *testing.T) {
-	db := &Database{
-		Version: "1.1",
-		Metadata: Metadata{
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
-		},
-		Jobs: Jobs{
-			"shellJob": {
-				Type:        TypeShell,
-				Description: "List directory contents every 5 seconds",
-				Config: JobConfig{
-					Command:       "ls -la",
-					Expression:    "*/5 * * * * *",
-					Status:        StatusEnable,
-					Timeout:       10,
-					MaxRetries:    0,
-					RetryInterval: 1,
-				},
-				Metadata: Metadata{
-					CreatedAt: time.Now().Unix(),
-					UpdatedAt: time.Now().Unix(),
-				},
-			},
-		},
-	}
+			restored, err := Deserialize(data)
+			if err != nil {
+				t.Fatalf("Deserialize failed: %v", err)
+			}
 
-	jsonData, err := db.Serialize()
-	if err != nil {
-		t.Fatalf("Serialize failed: %v", err)
-	}
-
-	var parsedData map[string]any
-	if err := json.Unmarshal(jsonData, &parsedData); err != nil {
-		t.Fatalf("Generated JSON is invalid: %v", err)
-	}
-
-	if version, exists := parsedData["version"]; !exists || version != "1.1" {
-		t.Errorf("Expected version '1.1', got '%v'", version)
-	}
-
-	if jobs, exists := parsedData["jobs"]; !exists {
-		t.Error("Jobs field missing in serialized JSON")
-	} else if jobsMap, ok := jobs.(map[string]any); !ok {
-		t.Error("Jobs field is not a map")
-	} else if _, jobExists := jobsMap["shellJob"]; !jobExists {
-		t.Error("shellJob missing in serialized jobs")
+			if !reflect.DeepEqual(tt.database, restored) {
+				t.Errorf("Database mismatch after round-trip serialization")
+			}
+		})
 	}
 }
 
-func TestDeserialize(t *testing.T) {
-	db, err := Deserialize([]byte(jsonData))
-	if err != nil {
-		t.Fatalf("Deserialize failed: %v", err)
-	}
-
-	if db.Version != "1.1" {
-		t.Errorf("Expected version '1.1', got '%s'", db.Version)
-	}
-
-	if len(db.Jobs) != 1 {
-		t.Errorf("Expected 1 job, got %d", len(db.Jobs))
-	}
-
-	job, exists := db.Jobs["shellJob"]
-	if !exists {
-		t.Fatal("shellJob not found in deserialized data")
-	}
-
-	if job.Type != TypeShell {
-		t.Errorf("Expected job type 'shell', got '%s'", job.Type)
-	}
-
-	if job.Description != "List directory contents every 5 seconds" {
-		t.Errorf("Unexpected job description: %s", job.Description)
-	}
-
-	if job.Config.Command != "ls -la" {
-		t.Errorf("Expected command 'ls -la', got '%s'", job.Config.Command)
-	}
-
-	if job.Config.Status != StatusEnable {
-		t.Errorf("Expected status 'enable', got '%s'", job.Config.Status)
-	}
-}
-
-func TestSerializeDeserializeRoundTrip(t *testing.T) {
-	original := &Database{
-		Version: "1.1",
-		Metadata: Metadata{
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+func TestStorageJSONInvalid(t *testing.T) {
+	tests := []struct {
+		name      string
+		jsonInput string
+	}{
+		{
+			name:      "invalid JSON",
+			jsonInput: `{invalid json}`,
 		},
-		Jobs: Jobs{
-			"testJob": {
-				Type:        TypeShell,
-				Description: "Test job",
-				Config: JobConfig{
-					Command:       "echo test",
-					Expression:    "*/10 * * * * *",
-					Status:        StatusDisable,
-					Timeout:       5,
-					MaxRetries:    3,
-					RetryInterval: 2,
-				},
-				Metadata: Metadata{
-					CreatedAt: time.Now().Unix(),
-					UpdatedAt: time.Now().Unix(),
-				},
-			},
+		{
+			name:      "unknown field",
+			jsonInput: `{"version": "1.0.0", "unknown_field": "value"}`,
+		},
+		{
+			name:      "invalid job status",
+			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "shell", "description": "test", "config": {"command": "echo", "expression": "* * * * *", "status": "invalid_status", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
+		},
+		{
+			name:      "invalid job type",
+			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "invalid_type", "description": "test", "config": {"command": "echo", "expression": "* * * * *", "status": "enable", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
 		},
 	}
 
-	jsonData, err := original.Serialize()
-	if err != nil {
-		t.Fatalf("Serialize failed: %v", err)
-	}
-
-	restored, err := Deserialize(jsonData)
-	if err != nil {
-		t.Fatalf("Deserialize failed: %v", err)
-	}
-
-	if !reflect.DeepEqual(original, restored) {
-		t.Errorf("Round-trip failed: original != restored")
-	}
-}
-
-func TestDeserializeInvalidJSON(t *testing.T) {
-	invalidJSON := `{invalid json}`
-
-	_, err := Deserialize([]byte(invalidJSON))
-	if err == nil {
-		t.Error("Expected error for invalid JSON, but got none")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Deserialize([]byte(tt.jsonInput))
+			if err == nil {
+				t.Errorf("Expected error for input %s, but got none", tt.jsonInput)
+			}
+		})
 	}
 }
