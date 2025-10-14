@@ -49,6 +49,7 @@ func main() {
 	scheduler.Start(ctx)
 
 	//  NOTE: schedule jobs
+	//  TODO: put it in jobs package ??
 	for jk, jv := range db.Jobs {
 		if jv.Type == storage.TypeShell {
 
