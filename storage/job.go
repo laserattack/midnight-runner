@@ -2,6 +2,8 @@ package storage
 
 //  NOTE: Job structure
 
+//  TODO: Expression -> CronExpression
+
 type JobConfig struct {
 	Command       string    `json:"command"`
 	Expression    string    `json:"expression"`

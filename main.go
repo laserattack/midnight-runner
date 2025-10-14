@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"servant/extjob"
+	"servant/storage"
 
 	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/logger"
@@ -15,22 +16,9 @@ import (
 )
 
 func main() {
-	//  NOTE: setup context
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	//  NOTE: setup logger
-	slogLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
-
-	//  NOTE: setup scheduler
-	scheduler, _ := quartz.NewStdScheduler(
-		quartz.WithLogger(quartzLogger),
-	)
-	scheduler.Start(ctx)
-
-	//  NOTE: setup signal's handler
+	//  NOTE: setup signal's handler and logger
 	sigChan := make(chan os.Signal, 1)
+	slogLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	// from https://pkg.go.dev/os#Signal:
 	// The only signal values guaranteed to be present in the os package
@@ -40,54 +28,85 @@ func main() {
 	// but os.Kill can not be trapped
 	signal.Notify(sigChan, os.Interrupt)
 
-	//  NOTE: create jobs with timeout
-	command := "sleep 4"
-	cronTrigger, _ := quartz.NewCronTrigger("*/10 * * * * *")
-	timeout := -2 * time.Second
+	dbName := "database_example.json"
+	db, err := storage.LoadFromFile(dbName)
+	if err != nil {
+		slog.Error("Database load failed",
+			"file", dbName,
+			"error", err,
+		)
+		os.Exit(1)
+	}
 
-	shellJob := extjob.NewShellJobWithCallbackAndTimeout(
-		command,
-		timeout,
-		func(ctx context.Context, j *job.ShellJob) {
-			status := j.JobStatus()
-			switch status {
-			case job.StatusOK:
-				quartzLogger.Info("Command completed successfully",
-					"command", command,
-					"exit_code", j.ExitCode(),
-				)
-			case job.StatusFailure:
-				select {
-				case <-ctx.Done():
-					quartzLogger.Error("Command timeout exceeded",
-						"command", command,
-						"exit_code", j.ExitCode(),
-					)
-				default:
-					quartzLogger.Error("Command failed",
-						"command", command,
-						"exit_code", j.ExitCode(),
-					)
-				}
+	//  NOTE: setup scheduler
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
+	scheduler, _ := quartz.NewStdScheduler(
+		quartz.WithLogger(quartzLogger),
+	)
+	scheduler.Start(ctx)
+
+	//  NOTE: schedule jobs
+	for jk, jv := range db.Jobs {
+		if jv.Type == storage.TypeShell {
+
+			command := jv.Config.Command
+			maxRetries := jv.Config.MaxRetries
+			retryInterval := jv.Config.RetryInterval
+			cronExpression := jv.Config.Expression
+			timeout := jv.Config.Timeout
+
+			quartzJob := extjob.NewShellJobWithCallbackAndTimeout(
+				command,
+				time.Duration(timeout)*time.Second,
+				func(ctx context.Context, j *job.ShellJob) {
+					status := j.JobStatus()
+					switch status {
+					case job.StatusOK:
+						quartzLogger.Info("Command completed successfully",
+							"command", command,
+							"exit_code", j.ExitCode(),
+						)
+					case job.StatusFailure:
+						select {
+						case <-ctx.Done():
+							quartzLogger.Error("Command timeout exceeded",
+								"command", command,
+								"exit_code", j.ExitCode(),
+							)
+						default:
+							quartzLogger.Error("Command failed",
+								"command", command,
+								"exit_code", j.ExitCode(),
+							)
+						}
+					}
+				},
+			)
+
+			quartzJobOpts := &quartz.JobDetailOptions{
+				MaxRetries:    maxRetries,
+				RetryInterval: time.Duration(retryInterval) * time.Second,
+				Replace:       false,
+				Suspended:     false,
 			}
-		},
-	)
 
-	//  NOTE: job options
-	opts := quartz.NewDefaultJobDetailOptions()
-	opts.MaxRetries = 1
-	opts.RetryInterval = 1 * time.Second
-	opts.Replace = false
-	opts.Suspended = false
+			quartzJobDetail := quartz.NewJobDetailWithOptions(
+				quartzJob,
+				quartz.NewJobKey(jk),
+				quartzJobOpts,
+			)
 
-	jobDetail := quartz.NewJobDetailWithOptions(
-		shellJob,
-		quartz.NewJobKey("shellJob"),
-		opts,
-	)
+			quartzCronTrigger, _ := quartz.NewCronTrigger(cronExpression)
 
-	//  NOTE: start jobs
-	_ = scheduler.ScheduleJob(jobDetail, cronTrigger)
+			_ = scheduler.ScheduleJob(
+				quartzJobDetail,
+				quartzCronTrigger,
+			)
+		}
+	}
 
 	//  NOTE: shutdown
 	<-sigChan
