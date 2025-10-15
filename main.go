@@ -26,6 +26,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	//  TODO: Задавать входным флагом при запуске программы
+	// использовать https://github.com/jessevdk/go-flags
 	dbName := "database_example.json"
 	db, err := storage.LoadFromFile(dbName) // db - 8 bytes ptr
 	if err != nil {
