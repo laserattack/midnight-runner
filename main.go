@@ -47,6 +47,7 @@ func main() {
 	dbName := opts.DBName
 	slogLogger.Info("Loading database", "file", dbName)
 
+	//  TODO: База в RAM должна обновляться если изменяется на диске
 	db, err := storage.LoadFromFile(dbName)
 	if err != nil {
 		slogLogger.Error("Database load failed",
