@@ -5,12 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"time"
 
-	"servant/extjob"
 	"servant/storage"
 
-	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/logger"
 	"github.com/reugn/go-quartz/quartz"
 )
@@ -49,65 +46,7 @@ func main() {
 	scheduler.Start(ctx)
 
 	//  NOTE: schedule jobs
-	//  TODO: put it in jobs package ??
-	for jk, jv := range db.Jobs {
-		if jv.Type == storage.TypeShell {
-
-			command := jv.Config.Command
-			maxRetries := jv.Config.MaxRetries
-			retryInterval := jv.Config.RetryInterval
-			cronExpression := jv.Config.Expression
-			timeout := jv.Config.Timeout
-
-			quartzJob := extjob.NewShellJobWithCallbackAndTimeout(
-				command,
-				time.Duration(timeout)*time.Second,
-				func(ctx context.Context, j *job.ShellJob) {
-					status := j.JobStatus()
-					switch status {
-					case job.StatusOK:
-						quartzLogger.Info("Command completed successfully",
-							"command", command,
-							"exit_code", j.ExitCode(),
-						)
-					case job.StatusFailure:
-						select {
-						case <-ctx.Done():
-							quartzLogger.Error("Command timeout exceeded",
-								"command", command,
-								"exit_code", j.ExitCode(),
-							)
-						default:
-							quartzLogger.Error("Command failed",
-								"command", command,
-								"exit_code", j.ExitCode(),
-							)
-						}
-					}
-				},
-			)
-
-			quartzJobOpts := &quartz.JobDetailOptions{
-				MaxRetries:    maxRetries,
-				RetryInterval: time.Duration(retryInterval) * time.Second,
-				Replace:       false,
-				Suspended:     false,
-			}
-
-			quartzJobDetail := quartz.NewJobDetailWithOptions(
-				quartzJob,
-				quartz.NewJobKey(jk),
-				quartzJobOpts,
-			)
-
-			quartzCronTrigger, _ := quartz.NewCronTrigger(cronExpression)
-
-			_ = scheduler.ScheduleJob(
-				quartzJobDetail,
-				quartzCronTrigger,
-			)
-		}
-	}
+	storage.RegisterJobs(scheduler, db, quartzLogger)
 
 	//  NOTE: shutdown
 	<-sigChan
