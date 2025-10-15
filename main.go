@@ -8,36 +8,55 @@ import (
 
 	"servant/storage"
 
+	"github.com/jessevdk/go-flags"
 	"github.com/reugn/go-quartz/logger"
 	"github.com/reugn/go-quartz/quartz"
 )
 
 func main() {
-	//  NOTE: setup signal's handler and logger
-	sigChan := make(chan os.Signal, 1)
+	//  NOTE: Setup logger
 	slogLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	// from https://pkg.go.dev/os#Signal:
-	// The only signal values guaranteed to be present in the os package
-	// on all systems are os.Interrupt (send the process an interrupt)
-	// and os.Kill (force the process to exit)
+	//  NOTE: Parse args
+	var opts struct {
+		DBName string `short:"d" long:"db" description:"Database file name" required:"true"`
+		Help   bool   `short:"h" long:"help" description:"Show this help message"`
+	}
 
-	// but os.Kill can not be trapped
+	parser := flags.NewParser(&opts, flags.Default)
+
+	_, err := parser.Parse()
+	if err != nil {
+		if _, ok := err.(*flags.Error); ok {
+			parser.WriteHelp(os.Stdout)
+		} else {
+			// system problem
+			slogLogger.Error("Failed to parse command line flags",
+				"error", err,
+			)
+		}
+		os.Exit(0)
+	}
+
+	//  NOTE: Setup signal's handler
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
-	//  TODO: Задавать входным флагом при запуске программы
-	// использовать https://github.com/jessevdk/go-flags
-	dbName := "database_example.json"
-	db, err := storage.LoadFromFile(dbName) // db - 8 bytes ptr
+	//  NOTE: Load database from arg
+	//  TODO: Тут должен быть путь а не имя
+	dbName := opts.DBName
+	slogLogger.Info("Loading database", "file", dbName)
+
+	db, err := storage.LoadFromFile(dbName)
 	if err != nil {
-		slog.Error("Database load failed",
+		slogLogger.Error("Database load failed",
 			"file", dbName,
 			"error", err,
 		)
-		os.Exit(1)
+		os.Exit(0)
 	}
 
-	//  NOTE: setup scheduler
+	//  NOTE: Setup scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -47,18 +66,16 @@ func main() {
 	)
 	scheduler.Start(ctx)
 
-	//  NOTE: register jobs from db
-	//  TODO: Сделать чтобы изменения в файле БД подхватывались прогой
-	// all arguments - 8 byte ptrs
+	//  NOTE: Register jobs from db
 	storage.RegisterJobs(scheduler, db, quartzLogger)
 
-	//  NOTE: shutdown
+	//  NOTE: Shutdown
 	<-sigChan
 	quartzLogger.Info("Received shutdown signal")
 
-	// stop the scheduler
+	// Stop scheduler
 	scheduler.Stop()
-	// wait for all workers to exit
+	// Wait for all workers to exit
 	scheduler.Wait(ctx)
 
 	quartzLogger.Info("Scheduler stopped")

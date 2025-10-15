@@ -2,6 +2,7 @@
 
 ## Dependencies
 
+- [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
 - [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
 
 ## Cron expression format
