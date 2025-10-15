@@ -27,10 +27,11 @@ func main() {
 
 	_, err := parser.Parse()
 	if err != nil {
+		// Checking err implements a *flags.Error type
 		if _, ok := err.(*flags.Error); ok {
 			parser.WriteHelp(os.Stdout)
 		} else {
-			// system problem
+			// System problem
 			slogLogger.Error("Failed to parse command line flags",
 				"error", err,
 			)
