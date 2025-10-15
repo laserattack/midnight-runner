@@ -45,7 +45,7 @@ func main() {
 	)
 	scheduler.Start(ctx)
 
-	//  NOTE: schedule jobs
+	//  NOTE: register jobs from db
 	storage.RegisterJobs(scheduler, db, quartzLogger)
 
 	//  NOTE: shutdown
