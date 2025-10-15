@@ -17,9 +17,10 @@ func RegisterJobs(
 	db *Database,
 	quartzLogger *logger.SlogLogger,
 ) {
-	for jk, jv := range db.Jobs {
-		if jv.Type == TypeShell {
-			registerShellJob(scheduler, jk, &jv, quartzLogger)
+	// j - *Job, 8 bytes (cheap copying)
+	for jk, j := range db.Jobs {
+		if j.Type == TypeShell {
+			registerShellJob(scheduler, jk, j, quartzLogger)
 		}
 	}
 }
@@ -29,14 +30,14 @@ func registerShellJob(
 	scheduler quartz.Scheduler,
 	jobKey string,
 	// instead of a heavy structure pass a pointer
-	jv *Job,
+	j *Job,
 	quartzLogger *logger.SlogLogger,
 ) {
-	command := jv.Config.Command
-	maxRetries := jv.Config.MaxRetries
-	retryInterval := jv.Config.RetryInterval
-	cronExpression := jv.Config.Expression
-	timeout := jv.Config.Timeout
+	command := j.Config.Command
+	maxRetries := j.Config.MaxRetries
+	retryInterval := j.Config.RetryInterval
+	cronExpression := j.Config.Expression
+	timeout := j.Config.Timeout
 
 	quartzJob := extjob.NewShellJobWithCallbackAndTimeout(
 		command,

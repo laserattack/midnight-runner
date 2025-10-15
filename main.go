@@ -26,7 +26,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	dbName := "database_example.json"
-	db, err := storage.LoadFromFile(dbName)
+	db, err := storage.LoadFromFile(dbName) // db - 8 bytes ptr
 	if err != nil {
 		slog.Error("Database load failed",
 			"file", dbName,
@@ -46,6 +46,7 @@ func main() {
 	scheduler.Start(ctx)
 
 	//  NOTE: register jobs from db
+	// all arguments - 8 byte ptrs
 	storage.RegisterJobs(scheduler, db, quartzLogger)
 
 	//  NOTE: shutdown

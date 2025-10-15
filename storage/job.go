@@ -20,4 +20,4 @@ type Job struct {
 	Metadata    Metadata  `json:"metadata"`
 }
 
-type Jobs map[string]Job
+type Jobs map[string]*Job
