@@ -25,6 +25,7 @@ func main() {
 	// but os.Kill can not be trapped
 	signal.Notify(sigChan, os.Interrupt)
 
+	//  TODO: Задавать входным флагом при запуске программы
 	dbName := "database_example.json"
 	db, err := storage.LoadFromFile(dbName) // db - 8 bytes ptr
 	if err != nil {
@@ -46,6 +47,7 @@ func main() {
 	scheduler.Start(ctx)
 
 	//  NOTE: register jobs from db
+	//  TODO: Сделать чтобы изменения в файле БД подхватывались прогой
 	// all arguments - 8 byte ptrs
 	storage.RegisterJobs(scheduler, db, quartzLogger)
 
