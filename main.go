@@ -94,7 +94,7 @@ func main() {
 
 	//  NOTE: Updating the database in RAM
 	//  TODO: Подумать над обработкой ошибок в функции
-	dbUpdatetickerStopChan := utils.Ticker(func() {
+	dbUpdateTickerStopChan := utils.Ticker(func() {
 		slogLogger.Info("Database updating in RAM")
 
 		dbDonor, err := storage.LoadFromFile(dbPath)
@@ -132,7 +132,7 @@ func main() {
 
 		slogLogger.Info("Database successfully updated in RAM")
 	}, time.Second*time.Duration(dbReloadInterval))
-	defer close(dbUpdatetickerStopChan)
+	defer close(dbUpdateTickerStopChan)
 
 	//  NOTE: Shutdown
 	<-sigChan
