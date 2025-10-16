@@ -17,6 +17,9 @@ func RegisterJobs(
 	db *Database,
 	quartzLogger *logger.SlogLogger,
 ) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell {
