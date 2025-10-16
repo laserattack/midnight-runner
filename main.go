@@ -5,8 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"servant/storage"
+	"servant/utils"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/reugn/go-quartz/logger"
@@ -19,7 +21,8 @@ func main() {
 
 	//  NOTE: Parse args
 	var flagOpts struct {
-		DatabasePath string `short:"d" long:"database" description:"Database file path" required:"true"`
+		DatabasePath           string `short:"d" long:"database" description:"Database file path" required:"true"`
+		DatabaseReloadInterval uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" required:"true"`
 	}
 
 	parser := flags.NewParser(&flagOpts, flags.Default)
@@ -38,18 +41,20 @@ func main() {
 		return
 	}
 
+	dbPath := flagOpts.DatabasePath
+	dbReloadInterval := flagOpts.DatabaseReloadInterval
+
+	if dbReloadInterval == 0 {
+		slogLogger.Error("Database reload interval must be greater than 0")
+		return
+	}
+
 	//  NOTE: Setup signal's handler
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
 	//  NOTE: Load database from arg
-	dbPath := flagOpts.DatabasePath
-	slogLogger.Info("Loading database",
-		"file", dbPath,
-	)
-
-	//  TODO: База в RAM должна обновляться если изменяется на диске
-	// При этом изменение на диске может поломать базу (невалидный json)
+	slogLogger.Info("Loading database", "file", dbPath)
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
 		slogLogger.Error("Database load failed",
@@ -58,7 +63,6 @@ func main() {
 		)
 		return
 	}
-
 	slogLogger.Info("Database loaded successfully", "file", dbPath)
 
 	//  NOTE: Setup scheduler
@@ -68,9 +72,7 @@ func main() {
 	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
 	scheduler, err := quartz.NewStdScheduler(quartz.WithLogger(quartzLogger))
 	if err != nil {
-		slogLogger.Error("Scheduler create failed",
-			"error", err,
-		)
+		slogLogger.Error("Scheduler create failed", "error", err)
 		return
 	}
 
@@ -89,6 +91,48 @@ func main() {
 		)
 		return
 	}
+
+	//  NOTE: Updating the database in RAM
+	//  TODO: Подумать над обработкой ошибок в функции
+	dbUpdatetickerStopChan := utils.Ticker(func() {
+		slogLogger.Info("Database updating in RAM")
+
+		dbDonor, err := storage.LoadFromFile(dbPath)
+		if err != nil {
+			slogLogger.Error("Database load failed",
+				"file", dbPath,
+				"error", err,
+			)
+			return
+		}
+
+		//  NOTE: Updated_at in json should be updated with any change in db
+		if db.UpdatedAtIsEqual(dbDonor.Metadata.UpdatedAt) {
+			slogLogger.Info("No changes in database")
+			return
+		}
+
+		slogLogger.Info("Changes detected in database")
+		storage.UpdateDatabase(db, dbDonor)
+
+		if err = scheduler.Clear(); err != nil {
+			slogLogger.Error("Scheduler clear failed",
+				"error", err,
+			)
+			return
+		}
+
+		err = storage.RegisterJobs(scheduler, db, quartzLogger)
+		if err != nil {
+			slogLogger.Error("Jobs register failed",
+				"error", err,
+			)
+			return
+		}
+
+		slogLogger.Info("Database successfully updated in RAM")
+	}, time.Second*time.Duration(dbReloadInterval))
+	defer close(dbUpdatetickerStopChan)
 
 	//  NOTE: Shutdown
 	<-sigChan

@@ -24,6 +24,22 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
+func UpdateDatabase(db, dbDonor *Database) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	db.Version = dbDonor.Version
+	db.Metadata = dbDonor.Metadata
+	db.Jobs = dbDonor.Jobs
+}
+
+func (db *Database) UpdatedAtIsEqual(v int64) bool {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	return v == db.Metadata.UpdatedAt
+}
+
 //  NOTE: Serialize storage structure in byte array
 
 func (db *Database) Serialize() ([]byte, error) {
