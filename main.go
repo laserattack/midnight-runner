@@ -51,10 +51,7 @@ func main() {
 	// При этом изменение на диске может поломать базу (невалидный json)
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
-		slogLogger.Error("Database load failed",
-			"file", dbPath,
-			"error", err,
-		)
+		slogLogger.Error("Database load failed", "file", dbPath, "error", err)
 		os.Exit(0)
 	}
 
@@ -65,10 +62,12 @@ func main() {
 	defer cancel()
 
 	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
-	//  TODO: Обработка ошибок
-	scheduler, _ := quartz.NewStdScheduler(
-		quartz.WithLogger(quartzLogger),
-	)
+	scheduler, err := quartz.NewStdScheduler(quartz.WithLogger(quartzLogger))
+	if err != nil {
+		slogLogger.Error("Scheduler create failed", "error", err)
+		os.Exit(0)
+	}
+
 	scheduler.Start(ctx)
 
 	//  NOTE: Register jobs from db
