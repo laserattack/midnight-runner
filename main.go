@@ -58,11 +58,14 @@ func main() {
 		os.Exit(0)
 	}
 
+	slogLogger.Info("Database loaded successfully", "file", dbPath)
+
 	//  NOTE: Setup scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
+	//  TODO: Обработка ошибок
 	scheduler, _ := quartz.NewStdScheduler(
 		quartz.WithLogger(quartzLogger),
 	)

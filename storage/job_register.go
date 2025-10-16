@@ -51,6 +51,7 @@ func registerShellJob(
 			case job.StatusOK:
 				quartzLogger.Info("Command completed successfully",
 					"command", command,
+					"cron_expression", cronExpression,
 					"exit_code", j.ExitCode(),
 				)
 			case job.StatusFailure:
@@ -58,11 +59,13 @@ func registerShellJob(
 				case <-ctx.Done():
 					quartzLogger.Error("Command timeout exceeded",
 						"command", command,
+						"cron_expression", cronExpression,
 						"exit_code", j.ExitCode(),
 					)
 				default:
 					quartzLogger.Error("Command failed",
 						"command", command,
+						"cron_expression", cronExpression,
 						"exit_code", j.ExitCode(),
 					)
 				}
@@ -83,8 +86,10 @@ func registerShellJob(
 		quartzJobOpts,
 	)
 
+	//  TODO: Обработка ошибок
 	quartzCronTrigger, _ := quartz.NewCronTrigger(cronExpression)
 
+	//  TODO: Обработка ошибок
 	_ = scheduler.ScheduleJob(
 		quartzJobDetail,
 		quartzCronTrigger,
