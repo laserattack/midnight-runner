@@ -36,6 +36,7 @@ func registerShellJob(
 	j *Job,
 	quartzLogger *logger.SlogLogger,
 ) {
+	description := j.Description
 	command := j.Config.Command
 	maxRetries := j.Config.MaxRetries
 	retryInterval := j.Config.RetryInterval
@@ -50,6 +51,7 @@ func registerShellJob(
 			switch status {
 			case job.StatusOK:
 				quartzLogger.Info("Command completed successfully",
+					"description", description,
 					"command", command,
 					"cron_expression", cronExpression,
 					"exit_code", j.ExitCode(),
@@ -58,12 +60,14 @@ func registerShellJob(
 				select {
 				case <-ctx.Done():
 					quartzLogger.Error("Command timeout exceeded",
+						"description", description,
 						"command", command,
 						"cron_expression", cronExpression,
 						"exit_code", j.ExitCode(),
 					)
 				default:
 					quartzLogger.Error("Command failed",
+						"description", description,
 						"command", command,
 						"cron_expression", cronExpression,
 						"exit_code", j.ExitCode(),
