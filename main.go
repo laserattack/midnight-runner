@@ -48,6 +48,7 @@ func main() {
 	slogLogger.Info("Loading database", "file", dbPath)
 
 	//  TODO: База в RAM должна обновляться если изменяется на диске
+	// При этом изменение на диске может поломать базу (невалидный json)
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
 		slogLogger.Error("Database load failed",
