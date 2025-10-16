@@ -43,35 +43,32 @@ func registerShellJob(
 	cronExpression := j.Config.CronExpression
 	timeout := j.Config.Timeout
 
+	logFields := func(exitCode int) []any {
+		return []any{
+			"description", description,
+			"command", command,
+			"cron_expression", cronExpression,
+			"exit_code", exitCode,
+		}
+	}
+
 	quartzJob := extjob.NewShellJobWithCallbackAndTimeout(
 		command,
 		time.Duration(timeout)*time.Second,
 		func(ctx context.Context, j *job.ShellJob) {
 			status := j.JobStatus()
+			exitCode := j.ExitCode()
+			fields := logFields(exitCode)
+
 			switch status {
 			case job.StatusOK:
-				quartzLogger.Info("Command completed successfully",
-					"description", description,
-					"command", command,
-					"cron_expression", cronExpression,
-					"exit_code", j.ExitCode(),
-				)
+				quartzLogger.Info("Command completed successfully", fields...)
 			case job.StatusFailure:
 				select {
 				case <-ctx.Done():
-					quartzLogger.Error("Command timeout exceeded",
-						"description", description,
-						"command", command,
-						"cron_expression", cronExpression,
-						"exit_code", j.ExitCode(),
-					)
+					quartzLogger.Error("Command timeout exceeded", fields...)
 				default:
-					quartzLogger.Error("Command failed",
-						"description", description,
-						"command", command,
-						"cron_expression", cronExpression,
-						"exit_code", j.ExitCode(),
-					)
+					quartzLogger.Error("Command failed", fields...)
 				}
 			}
 		},
