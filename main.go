@@ -36,7 +36,7 @@ func main() {
 				"error", err,
 			)
 		}
-		os.Exit(0)
+		return
 	}
 
 	//  NOTE: Setup signal's handler
@@ -52,7 +52,7 @@ func main() {
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
 		slogLogger.Error("Database load failed", "file", dbPath, "error", err)
-		os.Exit(0)
+		return
 	}
 
 	slogLogger.Info("Database loaded successfully", "file", dbPath)
@@ -65,7 +65,7 @@ func main() {
 	scheduler, err := quartz.NewStdScheduler(quartz.WithLogger(quartzLogger))
 	if err != nil {
 		slogLogger.Error("Scheduler create failed", "error", err)
-		os.Exit(0)
+		return
 	}
 
 	scheduler.Start(ctx)
