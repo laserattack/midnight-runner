@@ -17,7 +17,6 @@ func TestStorageJSONRountTrip(t *testing.T) {
 			database: &Database{
 				Version: "1.0.0",
 				Metadata: Metadata{
-					CreatedAt: time.Now().Unix(),
 					UpdatedAt: time.Now().Unix(),
 				},
 				Jobs: Jobs{
@@ -25,15 +24,14 @@ func TestStorageJSONRountTrip(t *testing.T) {
 						Type:        TypeShell,
 						Description: "Test job 1",
 						Config: JobConfig{
-							Command:       "echo hello",
-							Expression:    "* * * * *",
-							Status:        StatusEnable,
-							Timeout:       30,
-							MaxRetries:    3,
-							RetryInterval: 10,
+							Command:        "echo hello",
+							CronExpression: "* * * * *",
+							Status:         StatusEnable,
+							Timeout:        30,
+							MaxRetries:     3,
+							RetryInterval:  10,
 						},
 						Metadata: Metadata{
-							CreatedAt: time.Now().Unix(),
 							UpdatedAt: time.Now().Unix(),
 						},
 					},
@@ -41,15 +39,14 @@ func TestStorageJSONRountTrip(t *testing.T) {
 						Type:        TypeShell,
 						Description: "Test job 2",
 						Config: JobConfig{
-							Command:       "echo world",
-							Expression:    "0 * * * *",
-							Status:        StatusDisable,
-							Timeout:       60,
-							MaxRetries:    5,
-							RetryInterval: 5,
+							Command:        "echo world",
+							CronExpression: "0 * * * *",
+							Status:         StatusDisable,
+							Timeout:        60,
+							MaxRetries:     5,
+							RetryInterval:  5,
 						},
 						Metadata: Metadata{
-							CreatedAt: time.Now().Unix(),
 							UpdatedAt: time.Now().Unix(),
 						},
 					},
@@ -92,11 +89,11 @@ func TestStorageJSONInvalid(t *testing.T) {
 		},
 		{
 			name:      "invalid job status",
-			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "shell", "description": "test", "config": {"command": "echo", "expression": "* * * * *", "status": "invalid_status", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
+			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "shell", "description": "test", "config": {"command": "echo", "cron_expression": "* * * * *", "status": "invalid_status", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
 		},
 		{
 			name:      "invalid job type",
-			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "invalid_type", "description": "test", "config": {"command": "echo", "expression": "* * * * *", "status": "enable", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
+			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "invalid_type", "description": "test", "config": {"command": "echo", "cron_expression": "* * * * *", "status": "enable", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
 		},
 	}
 

@@ -14,11 +14,11 @@ var databaseFileMutex sync.RWMutex
 //  NOTE: Database, metadata
 
 type Metadata struct {
-	CreatedAt int64 `json:"created_at"`
 	UpdatedAt int64 `json:"updated_at"`
 }
 
 type Database struct {
+	mu       sync.RWMutex
 	Version  string   `json:"version"`
 	Metadata Metadata `json:"metadata"`
 	Jobs     Jobs     `json:"jobs"`
@@ -27,6 +27,9 @@ type Database struct {
 //  NOTE: Serialize storage structure in byte array
 
 func (db *Database) Serialize() ([]byte, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
 	return json.MarshalIndent(db, "", "    ")
 }
 

@@ -2,15 +2,13 @@ package storage
 
 //  NOTE: Job structure
 
-//  TODO: mb Expression -> CronExpression
-
 type JobConfig struct {
-	Command       string    `json:"command"`
-	Expression    string    `json:"expression"`
-	Status        JobStatus `json:"status"`
-	Timeout       int       `json:"timeout"`
-	MaxRetries    int       `json:"max_retries"`
-	RetryInterval int       `json:"retry_interval"`
+	Command        string    `json:"command"`
+	CronExpression string    `json:"cron_expression"`
+	Status         JobStatus `json:"status"`
+	Timeout        int       `json:"timeout"`
+	MaxRetries     int       `json:"max_retries"`
+	RetryInterval  int       `json:"retry_interval"`
 }
 
 type Job struct {

@@ -36,7 +36,7 @@ func registerShellJob(
 	command := j.Config.Command
 	maxRetries := j.Config.MaxRetries
 	retryInterval := j.Config.RetryInterval
-	cronExpression := j.Config.Expression
+	cronExpression := j.Config.CronExpression
 	timeout := j.Config.Timeout
 
 	quartzJob := extjob.NewShellJobWithCallbackAndTimeout(

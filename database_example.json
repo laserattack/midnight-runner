@@ -1,7 +1,6 @@
 {
 	"version": "1.1",
 	"metadata": {
-		"created_at": 123,
 		"updated_at": 123
 	},
 	"jobs": {
@@ -10,14 +9,13 @@
 			"description": "List directory contents every 5 seconds",
 			"config": {
 				"command": "ls -la",
-				"expression": "*/5 * * * * *",
+				"cron_expression": "*/5 * * * * *",
 				"status": "enable",
 				"timeout": 10,
 				"max_retries": 0,
 				"retry_interval": 1
 			},
 			"metadata": {
-				"created_at": 123,
 				"updated_at": 123
 			}
 		}
