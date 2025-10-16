@@ -19,7 +19,7 @@ func main() {
 
 	//  NOTE: Parse args
 	var opts struct {
-		DBName string `short:"d" long:"db" description:"Database file name" required:"true"`
+		DBPath string `short:"d" long:"db" description:"Database file path" required:"true"`
 		Help   bool   `short:"h" long:"help" description:"Show this help message"`
 	}
 
@@ -44,15 +44,14 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	//  NOTE: Load database from arg
-	//  TODO: Тут должен быть путь а не имя
-	dbName := opts.DBName
-	slogLogger.Info("Loading database", "file", dbName)
+	dbPath := opts.DBPath
+	slogLogger.Info("Loading database", "file", dbPath)
 
 	//  TODO: База в RAM должна обновляться если изменяется на диске
-	db, err := storage.LoadFromFile(dbName)
+	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
 		slogLogger.Error("Database load failed",
-			"file", dbName,
+			"file", dbPath,
 			"error", err,
 		)
 		os.Exit(0)

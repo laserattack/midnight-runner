@@ -9,7 +9,7 @@ import (
 )
 
 // A mutex for safe operation with a database stored on disk
-var fileMutex sync.RWMutex
+var databaseFileMutex sync.RWMutex
 
 //  NOTE: Database, metadata
 
@@ -48,11 +48,11 @@ func Deserialize(data []byte) (*Database, error) {
 
 //  NOTE: Load database from file
 
-func LoadFromFile(filename string) (*Database, error) {
-	fileMutex.RLock()
-	defer fileMutex.RUnlock()
+func LoadFromFile(filepath string) (*Database, error) {
+	databaseFileMutex.RLock()
+	defer databaseFileMutex.RUnlock()
 
-	data, err := os.ReadFile(filename)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func LoadFromFile(filename string) (*Database, error) {
 
 //  NOTE: Save database to file
 
-func SaveToFile(db *Database, filename string) error {
-	fileMutex.Lock()
-	defer fileMutex.Unlock()
+func SaveToFile(db *Database, filepath string) error {
+	databaseFileMutex.Lock()
+	defer databaseFileMutex.Unlock()
 
 	data, err := db.Serialize()
 	if err != nil {
@@ -72,12 +72,12 @@ func SaveToFile(db *Database, filename string) error {
 	}
 
 	// Write to temporary file first
-	tmpFilename := filename + ".tmp"
-	err = os.WriteFile(tmpFilename, data, 0o644)
+	tmpFilepath := filepath + ".tmp"
+	err = os.WriteFile(tmpFilepath, data, 0o644)
 	if err != nil {
 		return err
 	}
 
 	// Rename temporary file to actual file (atomic operation)
-	return os.Rename(tmpFilename, filename)
+	return os.Rename(tmpFilepath, filepath)
 }
