@@ -44,13 +44,18 @@ func main() {
 
 	//  NOTE: Load database from arg
 	dbPath := flagOpts.DatabasePath
-	slogLogger.Info("Loading database", "file", dbPath)
+	slogLogger.Info("Loading database",
+		"file", dbPath,
+	)
 
 	//  TODO: База в RAM должна обновляться если изменяется на диске
 	// При этом изменение на диске может поломать базу (невалидный json)
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
-		slogLogger.Error("Database load failed", "file", dbPath, "error", err)
+		slogLogger.Error("Database load failed",
+			"file", dbPath,
+			"error", err,
+		)
 		return
 	}
 
@@ -63,23 +68,29 @@ func main() {
 	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
 	scheduler, err := quartz.NewStdScheduler(quartz.WithLogger(quartzLogger))
 	if err != nil {
-		slogLogger.Error("Scheduler create failed", "error", err)
+		slogLogger.Error("Scheduler create failed",
+			"error", err,
+		)
 		return
 	}
 
 	scheduler.Start(ctx)
+	defer func() {
+		scheduler.Stop()
+		scheduler.Wait(ctx)
+		quartzLogger.Info("Scheduler stopped")
+	}()
 
 	//  NOTE: Register jobs from db
-	storage.RegisterJobs(scheduler, db, quartzLogger)
+	err = storage.RegisterJobs(scheduler, db, quartzLogger)
+	if err != nil {
+		slogLogger.Error("Jobs register failed",
+			"error", err,
+		)
+		return
+	}
 
 	//  NOTE: Shutdown
 	<-sigChan
 	quartzLogger.Info("Received shutdown signal")
-
-	// Stop scheduler
-	scheduler.Stop()
-	// Wait for all workers to exit
-	scheduler.Wait(ctx)
-
-	quartzLogger.Info("Scheduler stopped")
 }

@@ -16,16 +16,22 @@ func RegisterJobs(
 	scheduler quartz.Scheduler,
 	db *Database,
 	quartzLogger *logger.SlogLogger,
-) {
+) error {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell {
-			registerShellJob(scheduler, jk, j, quartzLogger)
+			//  TODO: Не уверен что хороший вариант так обрывать регистрацию
+			err := registerShellJob(scheduler, jk, j, quartzLogger)
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 func registerShellJob(
@@ -35,7 +41,7 @@ func registerShellJob(
 	// instead of a heavy structure pass a pointer
 	j *Job,
 	quartzLogger *logger.SlogLogger,
-) {
+) error {
 	description := j.Description
 	command := j.Config.Command
 	maxRetries := j.Config.MaxRetries
@@ -87,12 +93,15 @@ func registerShellJob(
 		quartzJobOpts,
 	)
 
-	//  TODO: Обработка ошибок
-	quartzCronTrigger, _ := quartz.NewCronTrigger(cronExpression)
+	quartzCronTrigger, err := quartz.NewCronTrigger(cronExpression)
+	if err != nil {
+		return err
+	}
 
-	//  TODO: Обработка ошибок
-	_ = scheduler.ScheduleJob(
-		quartzJobDetail,
-		quartzCronTrigger,
-	)
+	err = scheduler.ScheduleJob(quartzJobDetail, quartzCronTrigger)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
