@@ -18,18 +18,17 @@ func main() {
 	slogLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	//  NOTE: Parse args
-	var opts struct {
-		DBPath string `short:"d" long:"db" description:"Database file path" required:"true"`
-		Help   bool   `short:"h" long:"help" description:"Show this help message"`
+	var flagOpts struct {
+		DatabasePath string `short:"d" long:"database" description:"Database file path" required:"true"`
 	}
 
-	parser := flags.NewParser(&opts, flags.Default)
+	parser := flags.NewParser(&flagOpts, flags.Default)
 
 	_, err := parser.Parse()
 	if err != nil {
 		// Checking err implements a *flags.Error type
 		if _, ok := err.(*flags.Error); ok {
-			parser.WriteHelp(os.Stdout)
+			return
 		} else {
 			// System problem
 			slogLogger.Error("Failed to parse command line flags",
@@ -44,7 +43,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	//  NOTE: Load database from arg
-	dbPath := opts.DBPath
+	dbPath := flagOpts.DatabasePath
 	slogLogger.Info("Loading database", "file", dbPath)
 
 	//  TODO: База в RAM должна обновляться если изменяется на диске
