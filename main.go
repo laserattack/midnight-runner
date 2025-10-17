@@ -102,7 +102,7 @@ func main() {
 
 	//  NOTE: Updating the database in RAM
 
-	// Without atomic, a situation is possible where
+	// Without atomic, a situation is possible (im not sure) where
 	// 2 goroutines increment a variable at the same time and
 	// it increases by 1 instead of 2
 	var dbUpdateAttemptCount atomic.Uint32
