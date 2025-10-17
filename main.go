@@ -135,7 +135,7 @@ func main() {
 			return
 		}
 
-		// Updated_at in json should be updated with any change in db
+		// updated_at field in json should be updated with any change in db
 		if db.UpdatedAtIsEqual(dbDonor.Metadata.UpdatedAt) {
 			slogLogger.Info("No changes in database")
 			dbUpdateAttemptCount.Store(0)
