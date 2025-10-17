@@ -105,7 +105,7 @@ func main() {
 	// Without atomic, a situation is possible (im not sure) where
 	// 2 goroutines increment a variable at the same time and
 	// it increases by 1 instead of 2
-	var dbUpdateAttemptCount atomic.Uint32
+	var dbUpdateAttemptCounter atomic.Uint32
 	dbUpdateTickerStopChan := utils.Ticker(func() {
 		// Protection against startup after the start of app shutdown
 		select {
@@ -116,53 +116,71 @@ func main() {
 
 		// Exit if database reload has failed many
 		// times in a row - likely a persistent issue
-		if dbUpdateAttemptCount.Load() >= dbUpdateAttemptMaxCount {
+		if dbUpdateAttemptCounter.Load() >= dbUpdateAttemptMaxCount {
 			slogLogger.Error(
 				"Persistent database reload failures - shutting down",
 			)
 			cancel()
 			return
 		}
+
+		// Начало процесса обновления базы в RAM
 		slogLogger.Info("Database updating in RAM")
 
 		dbDonor, err := storage.LoadFromFile(dbPath)
 		if err != nil {
-			slogLogger.Error("Database load failed",
+			slogLogger.Warn("Database load failed",
 				"file", dbPath,
 				"error", err,
 			)
-			dbUpdateAttemptCount.Add(1)
+			dbUpdateAttemptCounter.Add(1)
 			return
 		}
+
+		// Если мы тут, то загрузка актуальной базы из файла прошла успешно
 
 		// updated_at field in json should be updated with any change in db
-		if db.UpdatedAtIsEqual(dbDonor.Metadata.UpdatedAt) {
-			slogLogger.Info("No changes in database")
-			dbUpdateAttemptCount.Store(0)
+		if db.UpdatedAtIsEqual(dbDonor.Metadata.UpdatedAt) &&
+			dbUpdateAttemptCounter.Load() == 0 {
+			slogLogger.Info("Database does not require updating")
 			return
 		}
 
-		slogLogger.Info("Changes detected in database")
+		// Сюда заходим если база в RAM неактуальная или если
+		// какие то ошибки были во время предыдущих попыток обновления
+		// эти ошибки могут означать что
+		// 1. Планировщик не смог корректно очиститься от старых работ
+		// 2. Не все новые работы были зарегистрированы
+
+		// Т.е. после ошибки надо перерегистрировать задачи,
+		// даже если данные не изменились
+
+		slogLogger.Info("Database needs to be updated")
 		storage.UpdateDatabase(db, dbDonor)
 
+		// На этом этапе база данных в RAM уже новая
+
 		if err = scheduler.Clear(); err != nil {
-			slogLogger.Error("Scheduler clear failed",
+			// В базе данных уже новые работы, но планировщик не очищается.
+			// Продолжает содержать старые работы => они будут выполняться
+			slogLogger.Warn("Scheduler clear failed",
 				"error", err,
 			)
-			dbUpdateAttemptCount.Add(1)
+			dbUpdateAttemptCounter.Add(1)
 			return
 		}
 
 		err = storage.RegisterJobs(scheduler, db, quartzLogger)
 		if err != nil {
-			slogLogger.Error("Jobs register failed",
+			// Не все новые работы зареганы
+			slogLogger.Warn("Jobs register failed",
 				"error", err,
 			)
-			dbUpdateAttemptCount.Add(1)
+			dbUpdateAttemptCounter.Add(1)
 			return
 		}
 
-		dbUpdateAttemptCount.Store(0)
+		dbUpdateAttemptCounter.Store(0)
 		slogLogger.Info("Database successfully updated in RAM")
 	}, time.Second*time.Duration(dbReloadInterval))
 	defer close(dbUpdateTickerStopChan)
