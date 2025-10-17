@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"time"
 
 	"servant/storage"
@@ -93,8 +94,25 @@ func main() {
 	}
 
 	//  NOTE: Updating the database in RAM
-	//  TODO: Подумать над обработкой ошибок в функции
+
+	// Without atomic, a situation is possible where
+	// 2 goroutines increment a variable at the same time and
+	// it increases by 1 instead of 2
+	var dbUpdateAttemptCount atomic.Int32
 	dbUpdateTickerStopChan := utils.Ticker(func() {
+		// Protection against startup after the start of app shutdown
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		// Exit if database reload has failed many times in a row - likely a persistent issue.
+		if dbUpdateAttemptCount.Load() >= 10 {
+			slogLogger.Error("Too many consecutive database update failures - shutting down")
+			cancel()
+			return
+		}
 		slogLogger.Info("Database updating in RAM")
 
 		dbDonor, err := storage.LoadFromFile(dbPath)
@@ -103,12 +121,14 @@ func main() {
 				"file", dbPath,
 				"error", err,
 			)
+			dbUpdateAttemptCount.Add(1)
 			return
 		}
 
-		//  NOTE: Updated_at in json should be updated with any change in db
+		// Updated_at in json should be updated with any change in db
 		if db.UpdatedAtIsEqual(dbDonor.Metadata.UpdatedAt) {
 			slogLogger.Info("No changes in database")
+			dbUpdateAttemptCount.Store(0)
 			return
 		}
 
@@ -119,6 +139,7 @@ func main() {
 			slogLogger.Error("Scheduler clear failed",
 				"error", err,
 			)
+			dbUpdateAttemptCount.Add(1)
 			return
 		}
 
@@ -127,14 +148,20 @@ func main() {
 			slogLogger.Error("Jobs register failed",
 				"error", err,
 			)
+			dbUpdateAttemptCount.Add(1)
 			return
 		}
 
+		dbUpdateAttemptCount.Store(0)
 		slogLogger.Info("Database successfully updated in RAM")
 	}, time.Second*time.Duration(dbReloadInterval))
 	defer close(dbUpdateTickerStopChan)
 
 	//  NOTE: Shutdown
-	<-sigChan
-	quartzLogger.Info("Received shutdown signal")
+	select {
+	case <-sigChan:
+		quartzLogger.Info("Received shutdown signal")
+	case <-ctx.Done():
+		quartzLogger.Info("Shutdown triggered by internal error")
+	}
 }
