@@ -107,9 +107,12 @@ func main() {
 		default:
 		}
 
-		// Exit if database reload has failed many times in a row - likely a persistent issue.
+		// Exit if database reload has failed many
+		// times in a row - likely a persistent issue
 		if dbUpdateAttemptCount.Load() >= 10 {
-			slogLogger.Error("Too many consecutive database update failures - shutting down")
+			slogLogger.Error(
+				"Persistent database reload failures - shutting down",
+			)
 			cancel()
 			return
 		}
