@@ -57,6 +57,12 @@ func main() {
 		return
 	}
 
+	slogLogger.Info("Program started with configuration",
+		"database", dbPath,
+		"database-reload-interval", dbReloadInterval,
+		"max-update-attempts", dbUpdateAttemptMaxCount,
+	)
+
 	//  NOTE: Setup signal's handler
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
