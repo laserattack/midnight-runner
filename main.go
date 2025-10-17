@@ -22,8 +22,9 @@ func main() {
 
 	//  NOTE: Parse args
 	var flagOpts struct {
-		DatabasePath           string `short:"d" long:"database" description:"Database file path" required:"true"`
-		DatabaseReloadInterval uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" required:"true"`
+		DatabasePath                  string `short:"d" long:"database" description:"Database file path" required:"true"`
+		DatabaseReloadInterval        uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" required:"true"`
+		DatabaseUpdateAttemptMaxCount uint32 `short:"m" long:"max-update-attempts" description:"Max consecutive database reload attempts before shutdown" default:"10"`
 	}
 
 	parser := flags.NewParser(&flagOpts, flags.Default)
@@ -44,9 +45,15 @@ func main() {
 
 	dbPath := flagOpts.DatabasePath
 	dbReloadInterval := flagOpts.DatabaseReloadInterval
+	dbUpdateAttemptMaxCount := flagOpts.DatabaseUpdateAttemptMaxCount
 
 	if dbReloadInterval == 0 {
-		slogLogger.Error("Database reload interval must be greater than 0")
+		slogLogger.Error("Database reload interval must be positive")
+		return
+	}
+
+	if dbUpdateAttemptMaxCount == 0 {
+		slogLogger.Error("Maximum database update attempts must be positive")
 		return
 	}
 
@@ -98,7 +105,7 @@ func main() {
 	// Without atomic, a situation is possible where
 	// 2 goroutines increment a variable at the same time and
 	// it increases by 1 instead of 2
-	var dbUpdateAttemptCount atomic.Int32
+	var dbUpdateAttemptCount atomic.Uint32
 	dbUpdateTickerStopChan := utils.Ticker(func() {
 		// Protection against startup after the start of app shutdown
 		select {
@@ -109,7 +116,7 @@ func main() {
 
 		// Exit if database reload has failed many
 		// times in a row - likely a persistent issue
-		if dbUpdateAttemptCount.Load() >= 10 {
+		if dbUpdateAttemptCount.Load() >= dbUpdateAttemptMaxCount {
 			slogLogger.Error(
 				"Persistent database reload failures - shutting down",
 			)
