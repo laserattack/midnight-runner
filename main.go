@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync/atomic"
 	"time"
 
 	"servant/storage"
+	"servant/ui"
 	"servant/utils"
 
 	"github.com/jessevdk/go-flags"
@@ -26,8 +29,10 @@ func main() {
 	//  NOTE: Parse args
 	var flagOpts struct {
 		DatabasePath                  string `short:"d" long:"database" description:"Database file path" required:"true"`
-		DatabaseReloadInterval        uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" required:"true"`
+		DatabaseReloadInterval        uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" default:"10"`
 		DatabaseUpdateAttemptMaxCount uint32 `short:"m" long:"max-update-attempts" description:"Max consecutive database reload attempts before shutdown" default:"10"`
+		WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"8080"`
+		WebServerShutdownTimeout      uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
 	}
 
 	parser := flags.NewParser(&flagOpts, flags.Default)
@@ -49,6 +54,8 @@ func main() {
 	dbPath := flagOpts.DatabasePath
 	dbReloadInterval := flagOpts.DatabaseReloadInterval
 	dbUpdateAttemptMaxCount := flagOpts.DatabaseUpdateAttemptMaxCount
+	webServerPort := fmt.Sprint(flagOpts.WebServerPort)
+	webServerShutdownTimeout := flagOpts.WebServerShutdownTimeout
 
 	if dbReloadInterval == 0 {
 		slogLogger.Error("Database reload interval must be positive")
@@ -64,6 +71,8 @@ func main() {
 		"database", dbPath,
 		"database-reload-interval", dbReloadInterval,
 		"max-update-attempts", dbUpdateAttemptMaxCount,
+		"port", webServerPort,
+		"server-shutdown-timeout", webServerShutdownTimeout,
 	)
 
 	//  NOTE: Setup signal's handler
@@ -82,10 +91,11 @@ func main() {
 	}
 	slogLogger.Info("Database loaded successfully", "file", dbPath)
 
-	//  NOTE: Setup scheduler
+	//  NOTE: Setup context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//  NOTE: Setup scheduler
 	quartzLogger := logger.NewSlogLogger(ctx, slogLogger)
 	scheduler, err := quartz.NewStdScheduler(quartz.WithLogger(quartzLogger))
 	if err != nil {
@@ -111,7 +121,7 @@ func main() {
 
 	//  NOTE: Updating the database in RAM
 
-	// Without atomic, a situation is possible (im not sure) where
+	// Without atomic, a situation is possible where
 	// 2 goroutines increment a variable at the same time and
 	// it increases by 1 instead of 2
 	var dbUpdateAttemptCounter atomic.Uint32
@@ -194,11 +204,34 @@ func main() {
 	}, time.Second*time.Duration(dbReloadInterval))
 	defer close(dbUpdateTickerStopChan)
 
+	//  NOTE: Start Web Server
+	server := ui.CreateWebServer(webServerPort, slogLogger)
+	go func() {
+		slogLogger.Info("Starting web server", "port", webServerPort)
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			slogLogger.Error("Web server error", "error", err)
+		}
+	}()
+
 	//  NOTE: Shutdown
 	select {
 	case <-sigChan:
 		quartzLogger.Info("Received shutdown signal")
 	case <-ctx.Done():
 		quartzLogger.Info("Shutdown triggered by internal error")
+	}
+
+	//  NOTE: Shutdown Web Server
+	serverCtx, serverCancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(webServerShutdownTimeout)*time.Second,
+	)
+	defer serverCancel()
+
+	if err := server.Shutdown(serverCtx); err != nil {
+		slogLogger.Error("Web server shutdown error", "error", err)
+	} else {
+		slogLogger.Info("Web server stopped")
 	}
 }
