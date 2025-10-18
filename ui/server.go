@@ -14,7 +14,7 @@ func CreateWebServer(port string, slogLogger *slog.Logger) *http.Server {
 			func(w http.ResponseWriter, r *http.Request) {
 				_, err := fmt.Fprintf(w, "Hello World!\n")
 				if err != nil {
-					slogLogger.Error("failed to write response", "error", err)
+					slogLogger.Error("Failed to write response", "error", err)
 					return
 				}
 			}),
