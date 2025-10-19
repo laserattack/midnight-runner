@@ -17,8 +17,8 @@ func RegisterJobs(
 	db *Database,
 	quartzLogger *logger.SlogLogger,
 ) error {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.Mu.RLock()
+	defer db.Mu.RUnlock()
 
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {

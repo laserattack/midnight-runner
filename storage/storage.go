@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-// A mutex for safe operation with a database stored on disk
+// A Mu.ex for safe operation with a database stored on disk
 var databaseFileMutex sync.RWMutex
 
 //  NOTE: Database, metadata
@@ -18,15 +18,15 @@ type Metadata struct {
 }
 
 type Database struct {
-	mu       sync.RWMutex
+	Mu       sync.RWMutex
 	Version  string   `json:"version"`
 	Metadata Metadata `json:"metadata"`
 	Jobs     Jobs     `json:"jobs"`
 }
 
 func UpdateDatabase(db, dbDonor *Database) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Mu.Lock()
+	defer db.Mu.Unlock()
 
 	db.Version = dbDonor.Version
 	db.Metadata = dbDonor.Metadata
@@ -34,8 +34,8 @@ func UpdateDatabase(db, dbDonor *Database) {
 }
 
 func (db *Database) UpdatedAtIsEqual(v int64) bool {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.Mu.RLock()
+	defer db.Mu.RUnlock()
 
 	return v == db.Metadata.UpdatedAt
 }
@@ -43,8 +43,8 @@ func (db *Database) UpdatedAtIsEqual(v int64) bool {
 //  NOTE: Serialize storage structure in byte array
 
 func (db *Database) Serialize() ([]byte, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.Mu.RLock()
+	defer db.Mu.RUnlock()
 
 	return json.MarshalIndent(db, "", "    ")
 }

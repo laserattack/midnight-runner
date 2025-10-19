@@ -9,6 +9,8 @@ import (
 
 type JobStatus int
 
+//  TODO: Статус inactive - нахуя? убрать
+
 const (
 	StatusEnable JobStatus = iota
 	StatusDisable
