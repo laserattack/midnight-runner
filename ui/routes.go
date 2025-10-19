@@ -50,7 +50,7 @@ func listHandler(
         }
 
         .header {
-            text-align: center;
+            text-align: left;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #e2e8f0;
@@ -69,7 +69,7 @@ func listHandler(
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             margin-bottom: 25px;
-            text-align: center;
+            text-align: left;
             font-size: 1.1rem;
             font-weight: 600;
             color: #475569;
@@ -138,12 +138,19 @@ func listHandler(
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{.Title}}</h1>
+            <h1>
+				🧞‍♂️⌛️ <a
+				target="_blank"
+				href="https://github.com/laserattack/servant">
+					{{.Title}}
+				</a>
+			</h1>
         </div>
         
-        {{if .Jobs}}
+        {{if .Database.Jobs}}
             <div class="stats">
-                Total Jobs: {{len .Jobs}}
+                Total Jobs: {{len .Database.Jobs}}
+				| Last database change: {{.Database.Metadata.UpdatedAt}}
             </div>
             
             <div class="jobs-table">
@@ -163,7 +170,7 @@ func listHandler(
                         </tr>
                     </thead>
                     <tbody>
-                        {{range $name, $job := .Jobs}}
+                        {{range $name, $job := .Database.Jobs}}
                         <tr>
                             <td class="job-name">{{$name}}</td>
                             <td>{{$job.Type}}</td>
@@ -204,26 +211,14 @@ func listHandler(
 		}
 
 		templateData := struct {
-			Title string
-			Jobs  storage.Jobs
+			Title    string
+			Database *storage.Database
 		}{
-			Title: "🧞‍♂️ Servant 🧞‍♂️",
-			Jobs:  db.Jobs,
+			Title:    "servant",
+			Database: db,
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-		slogLogger.Info("Rendering jobs", "job_count", len(db.Jobs))
-		for name, job := range db.Jobs {
-			slogLogger.Info("Job debug",
-				"name", name,
-				"status", job.Config.Status,
-				"timeout", job.Config.Timeout,
-				"max_retries", job.Config.MaxRetries,
-				"retry_interval", job.Config.RetryInterval,
-				"updated_at", job.Metadata.UpdatedAt,
-			)
-		}
 
 		err = tmpl.Execute(w, templateData)
 		if err != nil {
