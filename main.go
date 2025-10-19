@@ -205,7 +205,7 @@ func main() {
 	defer close(dbUpdateTickerStopChan)
 
 	//  NOTE: Start Web Server
-	server := ui.CreateWebServer(webServerPort, slogLogger)
+	server := ui.CreateWebServer(webServerPort, slogLogger, db)
 	go func() {
 		slogLogger.Info("Starting web server", "port", webServerPort)
 		err := server.ListenAndServe()
