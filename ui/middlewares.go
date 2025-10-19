@@ -17,7 +17,7 @@ func createMiddlewaresChain(ms ...middleware) middleware {
 
 func redirectToListMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" && r.URL.Path != "/list" {
+		if !validRoutes[r.URL.Path] {
 			http.Redirect(w, r, "/list", http.StatusFound)
 			return
 		}
