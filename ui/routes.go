@@ -28,47 +28,164 @@ func listHandler(
 <html>
 <head>
     <title>{{.Title}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8fafc;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .header h1 {
+            color: #1e293b;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .jobs-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        thead {
+            background: #4f46e5;
+            color: white;
+        }
+
+        th {
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #f1f5f9;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            padding: 14px 12px;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+
+        .no-jobs {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .job-name {
+            color: #1e293b;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
-    <h1>{{.Title}}</h1>
-    
-    {{if .Jobs}}
-        <p>All jobs count: {{len .Jobs}}</p>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Description</th>
-                    <th>Command</th>
-                    <th>Cron</th>
-                    <th>Status</th>
-                    <th>Timeout</th>
-                    <th>Max retries</th>
-                    <th>Retry interval</th>
-                    <th>Updated at</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{range $name, $job := .Jobs}}
-                <tr>
-                    <td>{{$name}}</td>
-                    <td>{{$job.Type}}</td>
-                    <td>{{$job.Description}}</td>
-                    <td>{{$job.Config.Command}}</td>
-                    <td>{{$job.Config.CronExpression}}</td>
-                    <td>{{$job.Config.Status}}</td>
-                    <td>{{$job.Config.Timeout}}</td>
-                    <td>{{$job.Config.MaxRetries}}</td>
-                    <td>{{$job.Config.RetryInterval}}</td>
-                    <td>{{$job.Metadata.UpdatedAt}}</td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    {{else}}
-        <p>No jobs</p>
-    {{end}}
+    <div class="container">
+        <div class="header">
+            <h1>{{.Title}}</h1>
+        </div>
+        
+        {{if .Jobs}}
+            <div class="stats">
+                Total Jobs: {{len .Jobs}}
+            </div>
+            
+            <div class="jobs-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Command</th>
+                            <th>Cron</th>
+                            <th>Status</th>
+                            <th>Timeout</th>
+                            <th>Max Retries</th>
+                            <th>Retry Interval</th>
+                            <th>Updated At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $name, $job := .Jobs}}
+                        <tr>
+                            <td class="job-name">{{$name}}</td>
+                            <td>{{$job.Type}}</td>
+                            <td>{{$job.Description}}</td>
+                            <td><code>{{$job.Config.Command}}</code></td>
+                            <td><code>{{$job.Config.CronExpression}}</code></td>
+                            <td>{{$job.Config.Status}}</td>
+                            <td>{{$job.Config.Timeout}}</td>
+                            <td>{{$job.Config.MaxRetries}}</td>
+                            <td>{{$job.Config.RetryInterval}}</td>
+                            <td>{{$job.Metadata.UpdatedAt}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        {{else}}
+            <div class="no-jobs">
+                <p>No jobs configured</p>
+            </div>
+        {{end}}
+    </div>
 </body>
 </html>`
 
@@ -90,11 +207,23 @@ func listHandler(
 			Title string
 			Jobs  storage.Jobs
 		}{
-			Title: "Jobs list",
+			Title: "🧞‍♂️ Servant 🧞‍♂️",
 			Jobs:  db.Jobs,
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		slogLogger.Info("Rendering jobs", "job_count", len(db.Jobs))
+		for name, job := range db.Jobs {
+			slogLogger.Info("Job debug",
+				"name", name,
+				"status", job.Config.Status,
+				"timeout", job.Config.Timeout,
+				"max_retries", job.Config.MaxRetries,
+				"retry_interval", job.Config.RetryInterval,
+				"updated_at", job.Metadata.UpdatedAt,
+			)
+		}
 
 		err = tmpl.Execute(w, templateData)
 		if err != nil {
