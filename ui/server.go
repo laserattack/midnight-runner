@@ -19,6 +19,31 @@ func CreateWebServer(
 	slogLogger *slog.Logger,
 	db *storage.Database,
 ) *http.Server {
+	mux := http.NewServeMux()
+
+	m := createMiddlewaresChain(
+		redirectToListMiddleware,
+	)
+
+	mux.Handle("/", m(rootHandler()))
+	mux.Handle("/list", m(listHandler(slogLogger, db)))
+
+	return &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
+	}
+}
+
+func rootHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/list", http.StatusFound)
+	})
+}
+
+func listHandler(
+	slogLogger *slog.Logger,
+	db *storage.Database,
+) http.HandlerFunc {
 	htmlTemplate := `
 <!DOCTYPE html>
 <html>
@@ -57,7 +82,7 @@ func CreateWebServer(
                     <td>{{$job.Config.Timeout}}</td>
                     <td>{{$job.Config.MaxRetries}}</td>
                     <td>{{$job.Config.RetryInterval}}</td>
-                    <td>{{$job.Metadata.UpdatedAt}}</tb>
+                    <td>{{$job.Metadata.UpdatedAt}}</td>
                 </tr>
                 {{end}}
             </tbody>
@@ -68,32 +93,28 @@ func CreateWebServer(
 </body>
 </html>`
 
-	return &http.Server{
-		Addr: ":" + port,
-		Handler: http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				tmpl, err := template.New("webpage").
-					Funcs(template.FuncMap{}).
-					Parse(htmlTemplate)
-				if err != nil {
-					slogLogger.Error("Failed to parse template", "error", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					return
-				}
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.New("webpage").
+			Funcs(template.FuncMap{}).
+			Parse(htmlTemplate)
+		if err != nil {
+			slogLogger.Error("Failed to parse template", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 
-				templateData := TemplateData{
-					Title: "Jobs list",
-					Jobs:  db.Jobs,
-				}
+		templateData := TemplateData{
+			Title: "Jobs list",
+			Jobs:  db.Jobs,
+		}
 
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-				err = tmpl.Execute(w, templateData)
-				if err != nil {
-					slogLogger.Error("Failed to execute template", "error", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					return
-				}
-			}),
+		err = tmpl.Execute(w, templateData)
+		if err != nil {
+			slogLogger.Error("Failed to execute template", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
