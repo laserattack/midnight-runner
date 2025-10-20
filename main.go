@@ -159,7 +159,11 @@ func main() {
 		// Если мы тут, то загрузка актуальной базы из файла прошла успешно
 
 		// updated_at field in json should be updated with any change in db
-		if db.UpdatedAtIsEqual(dbDonor.Metadata.UpdatedAt) &&
+		db.Mu.RLock()
+		dbUpdatedAt := db.Metadata.UpdatedAt
+		db.Mu.RUnlock()
+
+		if dbUpdatedAt == dbDonor.Metadata.UpdatedAt &&
 			dbUpdateAttemptCounter.Load() == 0 {
 			slogLogger.Info("Database does not require updating")
 			return
