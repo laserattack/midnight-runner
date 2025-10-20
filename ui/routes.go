@@ -19,6 +19,9 @@ func rootHandler() http.Handler {
 	})
 }
 
+//  TODO: Должен быть какой то значок в статусе джобы
+// говорящий о том, выполнилась ли она последний раз или нет
+
 func listHandler(
 	slogLogger *slog.Logger,
 	db *storage.Database,
@@ -150,7 +153,6 @@ func listHandler(
 		{{if .Database.Jobs}}
 			<div class="stats">
 				Total jobs: {{len .Database.Jobs}}
-				| Last settings change: {{.Database.Metadata.UpdatedAt}}
 			</div>
 
 			<div class="jobs-table">
@@ -166,7 +168,6 @@ func listHandler(
 							<th>Timeout</th>
 							<th>Max Retries</th>
 							<th>Retry Interval</th>
-							<th>Changed At</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -183,7 +184,6 @@ func listHandler(
 							<td>{{$job.Config.Timeout}}</td>
 							<td>{{$job.Config.MaxRetries}}</td>
 							<td>{{$job.Config.RetryInterval}}</td>
-							<td>{{$job.Metadata.UpdatedAt}}</td>
 						</tr>
 						{{end}}
 					</tbody>

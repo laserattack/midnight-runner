@@ -9,22 +9,32 @@ import (
 )
 
 type TimeoutShellJob struct {
-	command  string
-	timeout  time.Duration
-	shellJob *job.ShellJob
-	callback func(ctx context.Context, j *job.ShellJob)
+	command    string
+	timeout    time.Duration
+	shellJob   *job.ShellJob
+	beforeExec func(ctx context.Context, j *job.ShellJob)
+	afterExec  func(ctx context.Context, j *job.ShellJob)
 }
 
 func (j *TimeoutShellJob) Execute(ctx context.Context) error {
+	if j.beforeExec != nil {
+		j.beforeExec(ctx, j.shellJob)
+	}
+
+	var err error
 	if j.timeout <= 0 {
 		return j.shellJob.Execute(ctx)
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, j.timeout)
 	defer cancel()
+	err = j.shellJob.Execute(timeoutCtx)
 
-	//  TODO: Проверить умрут ли дочерние процессы по истечении таймаута?
-	return j.shellJob.Execute(timeoutCtx)
+	if j.afterExec != nil {
+		j.afterExec(ctx, j.shellJob)
+	}
+
+	return err
 }
 
 func (j *TimeoutShellJob) Description() string {
@@ -47,17 +57,19 @@ func (j *TimeoutShellJob) Stderr() string {
 	return j.shellJob.Stderr()
 }
 
-func NewShellJobWithCallbackAndTimeout(
+func NewShellJobWithCallbacks(
 	command string,
 	timeout time.Duration,
-	callback func(ctx context.Context, j *job.ShellJob),
+	beforeExec func(ctx context.Context, j *job.ShellJob),
+	afterExec func(ctx context.Context, j *job.ShellJob),
 ) *TimeoutShellJob {
-	shellJob := job.NewShellJobWithCallback(command, callback)
+	shellJob := job.NewShellJob(command)
 
 	return &TimeoutShellJob{
-		command:  command,
-		timeout:  timeout,
-		shellJob: shellJob,
-		callback: callback,
+		command:    command,
+		timeout:    timeout,
+		shellJob:   shellJob,
+		beforeExec: beforeExec,
+		afterExec:  afterExec,
 	}
 }

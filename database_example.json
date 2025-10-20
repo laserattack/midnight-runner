@@ -1,22 +1,22 @@
 {
 	"version": "1.1",
 	"metadata": {
-		"updated_at": 1760894443
+		"updated_at": 1760894444
 	},
 	"jobs": {
 		"shellJob": {
 			"type": "shell",
-			"description": "List directory contents every 5 seconds",
+			"description": "List directory contents every 20 seconds",
 			"config": {
-				"command": "ls -la",
-				"cron_expression": "*/5 * * * * *",
+				"command": "ls -la; sleep 5",
+				"cron_expression": "*/20 * * * * *",
 				"status": "enable",
 				"timeout": 10,
 				"max_retries": 0,
 				"retry_interval": 1
 			},
 			"metadata": {
-				"updated_at": 1760894443
+				"updated_at": 1760894444
 			}
 		}
 	}

@@ -24,7 +24,7 @@ func RegisterJobs(
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell {
 			//  TODO: Не уверен что хороший вариант так обрывать регистрацию
-			err := registerShellJob(scheduler, jk, j, quartzLogger)
+			err := registerShellJob(scheduler, db, jk, j, quartzLogger)
 			if err != nil {
 				return err
 			}
@@ -37,6 +37,7 @@ func RegisterJobs(
 func registerShellJob(
 	// quartz.Scheduler = &StdScheduler, 8 bytes
 	scheduler quartz.Scheduler,
+	db *Database,
 	jobKey string,
 	// instead of a heavy structure pass a pointer
 	j *Job,
@@ -49,35 +50,49 @@ func registerShellJob(
 	cronExpression := j.Config.CronExpression
 	timeout := j.Config.Timeout
 
-	logFields := func(exitCode int) []any {
+	logFields := func() []any {
 		return []any{
 			"description", description,
 			"command", command,
 			"cron_expression", cronExpression,
-			"exit_code", exitCode,
 		}
 	}
 
-	quartzJob := extjob.NewShellJobWithCallbackAndTimeout(
+	afterExec := func(ctx context.Context, qj *job.ShellJob) {
+		db.Mu.Lock()
+		j.Config.Status = StatusEnable
+		db.Mu.Unlock()
+
+		status := qj.JobStatus()
+		fields := logFields()
+
+		switch status {
+		case job.StatusOK:
+			quartzLogger.Info("Command completed successfully", fields...)
+		case job.StatusFailure:
+			select {
+			case <-ctx.Done():
+				quartzLogger.Error("Command timeout exceeded", fields...)
+			default:
+				quartzLogger.Error("Command failed", fields...)
+			}
+		}
+	}
+
+	beforeExec := func(ctx context.Context, qj *job.ShellJob) {
+		db.Mu.Lock()
+		j.Config.Status = StatusActive
+		db.Mu.Unlock()
+
+		fields := logFields()
+		quartzLogger.Info("Start command execution", fields...)
+	}
+
+	quartzJob := extjob.NewShellJobWithCallbacks(
 		command,
 		time.Duration(timeout)*time.Second,
-		func(ctx context.Context, j *job.ShellJob) {
-			status := j.JobStatus()
-			exitCode := j.ExitCode()
-			fields := logFields(exitCode)
-
-			switch status {
-			case job.StatusOK:
-				quartzLogger.Info("Command completed successfully", fields...)
-			case job.StatusFailure:
-				select {
-				case <-ctx.Done():
-					quartzLogger.Error("Command timeout exceeded", fields...)
-				default:
-					quartzLogger.Error("Command failed", fields...)
-				}
-			}
-		},
+		beforeExec,
+		afterExec,
 	)
 
 	quartzJobOpts := &quartz.JobDetailOptions{
