@@ -33,13 +33,6 @@ func UpdateDatabase(db, dbDonor *Database) {
 	db.Jobs = dbDonor.Jobs
 }
 
-func (db *Database) UpdatedAtIsEqual(v int64) bool {
-	db.Mu.RLock()
-	defer db.Mu.RUnlock()
-
-	return v == db.Metadata.UpdatedAt
-}
-
 //  NOTE: Serialize storage structure in byte array
 
 func (db *Database) Serialize() ([]byte, error) {
