@@ -50,12 +50,10 @@ func registerShellJob(
 	cronExpression := j.Config.CronExpression
 	timeout := j.Config.Timeout
 
-	logFields := func() []any {
-		return []any{
-			"description", description,
-			"command", command,
-			"cron_expression", cronExpression,
-		}
+	logFields := []any{
+		"description", description,
+		"command", command,
+		"cron_expression", cronExpression,
 	}
 
 	afterExec := func(ctx context.Context, qj *job.ShellJob) {
@@ -64,17 +62,16 @@ func registerShellJob(
 		db.Mu.Unlock()
 
 		status := qj.JobStatus()
-		fields := logFields()
 
 		switch status {
 		case job.StatusOK:
-			quartzLogger.Info("Command completed successfully", fields...)
+			quartzLogger.Info("Command completed successfully", logFields...)
 		case job.StatusFailure:
 			select {
 			case <-ctx.Done():
-				quartzLogger.Error("Command timeout exceeded", fields...)
+				quartzLogger.Error("Command timeout exceeded", logFields...)
 			default:
-				quartzLogger.Error("Command failed", fields...)
+				quartzLogger.Error("Command failed", logFields...)
 			}
 		}
 	}
@@ -84,8 +81,7 @@ func registerShellJob(
 		j.Config.Status = StatusActive
 		db.Mu.Unlock()
 
-		fields := logFields()
-		quartzLogger.Info("Start command execution", fields...)
+		quartzLogger.Info("Start command execution", logFields...)
 	}
 
 	quartzJob := extjob.NewShellJobWithCallbacks(
