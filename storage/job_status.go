@@ -15,7 +15,6 @@ const (
 	StatusEnable JobStatus = iota
 	StatusDisable
 	StatusActive
-	StatusInactive
 )
 
 func (js JobStatus) String() string {
@@ -26,8 +25,6 @@ func (js JobStatus) String() string {
 		return "disable"
 	case StatusActive:
 		return "active"
-	case StatusInactive:
-		return "inactive"
 	default:
 		return "unknown"
 	}
@@ -50,8 +47,6 @@ func (js *JobStatus) UnmarshalJSON(data []byte) error {
 		*js = StatusDisable
 	case "active":
 		*js = StatusActive
-	case "inactive":
-		*js = StatusInactive
 	default:
 		return fmt.Errorf("invalid JobStatus: %s", s)
 	}
