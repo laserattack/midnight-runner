@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"net/http"
 )
 
@@ -15,12 +16,15 @@ func createMiddlewaresChain(ms ...middleware) middleware {
 	}
 }
 
-func redirectToListMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !validRoutes[r.URL.Path] {
-			http.Redirect(w, r, "/list", http.StatusFound)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+func getLogMiddleware(slogLogger *slog.Logger) middleware {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			slogLogger.Info("HTTP request",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"remote_addr", r.RemoteAddr,
+			)
+			h.ServeHTTP(w, r)
+		})
+	}
 }

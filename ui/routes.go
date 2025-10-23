@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -8,210 +9,41 @@ import (
 	"servant/storage"
 )
 
-var validRoutes = map[string]bool{
-	"/":     true,
-	"/list": true,
-}
+const templatesDir = "./ui/resources/"
 
-func rootHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func rootHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/list", http.StatusFound)
-	})
+	}
 }
 
 //  TODO: Должен быть какой то значок в статусе джобы
 // говорящий о том, выполнилась ли она последний раз или нет
 
+//  TODO: Темная тема
+//  TODO: Обновление информации периодическое
+
 func listHandler(
 	slogLogger *slog.Logger,
 	db *storage.Database,
 ) http.HandlerFunc {
-	htmlTemplate := `
-<!DOCTYPE html>
-<html>
-<head>
-	<title>{{.Title}}</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<style>
-		* {
-			margin: 0;
-			padding: 0;
-			box-sizing: border-box;
-		}
+	templateName := "list.html"
 
-		body {
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-			line-height: 1.6;
-			color: #333;
-			background: #f8fafc;
-			padding: 20px;
-		}
-
-		.container {
-			max-width: 1400px;
-			margin: 0 auto;
-		}
-
-		.header {
-			text-align: left;
-			margin-bottom: 30px;
-			padding-bottom: 20px;
-			border-bottom: 2px solid #e2e8f0;
-		}
-
-		.header h1 {
-			color: #1e293b;
-			font-size: 2.5rem;
-			font-weight: 700;
-			margin-bottom: 10px;
-		}
-
-		.stats {
-			background: white;
-			padding: 20px;
-			border-radius: 12px;
-			box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-			margin-bottom: 25px;
-			text-align: left;
-			font-size: 1.1rem;
-			font-weight: 600;
-			color: #475569;
-		}
-
-		.jobs-table {
-			background: white;
-			border-radius: 12px;
-			box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-			overflow: hidden;
-			overflow-x: auto;
-		}
-
-		table {
-			width: 100%;
-			border-collapse: collapse;
-			min-width: 1000px;
-		}
-
-		thead {
-			background: #4f46e5;
-			color: white;
-		}
-
-		th {
-			padding: 16px 12px;
-			text-align: left;
-			font-weight: 600;
-			font-size: 0.9rem;
-			text-transform: uppercase;
-			letter-spacing: 0.5px;
-		}
-
-		tbody tr {
-			border-bottom: 1px solid #e2e8f0;
-			transition: background-color 0.2s ease;
-		}
-
-		tbody tr:hover {
-			background: #f1f5f9;
-		}
-
-		tbody tr:last-child {
-			border-bottom: none;
-		}
-
-		td {
-			padding: 14px 12px;
-			color: #475569;
-			font-size: 0.9rem;
-		}
-
-		.no-jobs {
-			text-align: center;
-			padding: 60px 20px;
-			color: #64748b;
-			font-size: 1.1rem;
-		}
-
-		.job-name {
-			color: #1e293b;
-			font-weight: 600;
-		}
-	</style>
-</head>
-<body>
-	<div class="container">
-		<div class="header">
-			<h1>
-				🧞‍♂️⌛️ <a
-				target="_blank"
-				href="https://github.com/laserattack/servant">
-					{{.Title}}
-				</a>
-			</h1>
-		</div>
-
-		{{if .Database.Jobs}}
-			<div class="stats">
-				Total jobs: {{len .Database.Jobs}}
-			</div>
-
-			<div class="jobs-table">
-				<table>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Type</th>
-							<th>Description</th>
-							<th>Command</th>
-							<th>Cron</th>
-							<th>Status</th>
-							<th>Timeout</th>
-							<th>Max Retries</th>
-							<th>Retry Interval</th>
-						</tr>
-					</thead>
-					<tbody>
-						{{range $name, $job := .Database.Jobs}}
-						<tr>
-							<td class="job-name">{{$name}}</td>
-							<td>{{$job.Type}}</td>
-							<td>{{$job.Description}}</td>
-							<td><code>{{$job.Config.Command}}</code></td>
-							<td><code>
-								{{$job.Config.CronExpression}}
-							</code></td>
-							<td>{{$job.Config.Status}}</td>
-							<td>{{$job.Config.Timeout}}</td>
-							<td>{{$job.Config.MaxRetries}}</td>
-							<td>{{$job.Config.RetryInterval}}</td>
-						</tr>
-						{{end}}
-					</tbody>
-				</table>
-			</div>
-		{{else}}
-			<div class="no-jobs">
-				<p>No jobs configured</p>
-			</div>
-		{{end}}
-	</div>
-</body>
-</html>`
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.New("webpage").
-			Funcs(template.FuncMap{}).
-			Parse(htmlTemplate)
-		if err != nil {
-			slogLogger.Error("Failed to parse template", "error", err)
+	tmpl, err := template.New(templateName).
+		Funcs(template.FuncMap{}).
+		ParseFiles(templatesDir + templateName)
+	if err != nil {
+		slogLogger.Error("Failed to parse template", "error", err)
+		return func(w http.ResponseWriter, r *http.Request) {
 			http.Error(
 				w,
-				"Internal Server Error",
+				fmt.Sprintf("Failed to parse template '%s'", templateName),
 				http.StatusInternalServerError,
 			)
-			return
 		}
+	}
 
+	return func(w http.ResponseWriter, r *http.Request) {
 		templateData := TemplateData{
 			Title:    "servant",
 			Database: convertDatabase(db),
@@ -219,7 +51,7 @@ func listHandler(
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-		err = tmpl.Execute(w, templateData)
+		err = tmpl.ExecuteTemplate(w, templateName, templateData)
 		if err != nil {
 			slogLogger.Error("Failed to execute template", "error", err)
 			http.Error(
@@ -227,7 +59,6 @@ func listHandler(
 				"Internal Server Error",
 				http.StatusInternalServerError,
 			)
-			return
 		}
 	}
 }

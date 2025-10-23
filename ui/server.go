@@ -15,11 +15,12 @@ func CreateWebServer(
 ) *http.Server {
 	mux := http.NewServeMux()
 
+	//  NOTE: Register routes
+
 	m := createMiddlewaresChain(
-		redirectToListMiddleware,
+		getLogMiddleware(slogLogger),
 	)
 
-	//  NOTE: Register routes
 	mux.Handle("/", m(rootHandler()))
 	mux.Handle("/list", m(listHandler(slogLogger, db)))
 
