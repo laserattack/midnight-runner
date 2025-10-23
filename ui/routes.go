@@ -5,11 +5,11 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"path/filepath"
+	"time"
 
 	"servant/storage"
 )
-
-const templatesDir = "./ui/resources/"
 
 func rootHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -29,29 +29,21 @@ func listHandler(
 ) http.HandlerFunc {
 	templateName := "list.html"
 
-	tmpl, err := template.New(templateName).
-		Funcs(template.FuncMap{}).
-		ParseFiles(templatesDir + templateName)
-	if err != nil {
-		slogLogger.Error("Failed to parse template", "error", err)
-		return func(w http.ResponseWriter, r *http.Request) {
-			http.Error(
-				w,
-				fmt.Sprintf("Failed to parse template '%s'", templateName),
-				http.StatusInternalServerError,
-			)
-		}
+	tmpl, fallbackHandler := getTemplateAndFallback(slogLogger, templateName)
+	if tmpl == nil {
+		return fallbackHandler
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		templateData := TemplateData{
-			Title:    "servant",
-			Database: convertDatabase(db),
+			Title:           "servant",
+			RenderTimestamp: time.Now().Unix(),
+			Database:        convertDatabase(db),
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-		err = tmpl.ExecuteTemplate(w, templateName, templateData)
+		err := tmpl.ExecuteTemplate(w, templateName, templateData)
 		if err != nil {
 			slogLogger.Error("Failed to execute template", "error", err)
 			http.Error(
@@ -61,4 +53,35 @@ func listHandler(
 			)
 		}
 	}
+}
+
+// getTemplateAndFallback loads and parses an HTML template
+// from the file system. It returns the parsed template and
+// a fallback HTTP handler. If template parsing fails,
+// it returns nil for the template and a fallback handler
+// that returns an HTTP 500 error with details about the failure.
+
+//  TODO: Тут надо какую то html страничку возвращать красивую
+// с описанием ошибки. Хранить ее можно в константной строке
+// чтобы ничего не парсить
+
+func getTemplateAndFallback(
+	slogLogger *slog.Logger,
+	templateName string,
+) (*template.Template, func(w http.ResponseWriter, r *http.Request)) {
+	templatePath := filepath.Join(templatesDir, templateName)
+	tmpl, err := template.New(templateName).
+		Funcs(template.FuncMap{}).
+		ParseFiles(templatePath)
+	if err != nil {
+		slogLogger.Error("Failed to parse template", "error", err)
+		return nil, func(w http.ResponseWriter, r *http.Request) {
+			http.Error(
+				w,
+				fmt.Sprintf("Failed to parse template '%s'", templateName),
+				http.StatusInternalServerError,
+			)
+		}
+	}
+	return tmpl, nil
 }

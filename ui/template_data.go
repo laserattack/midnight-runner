@@ -7,9 +7,12 @@ import (
 	"servant/storage"
 )
 
+// the data structure passed to the template
+
 type TemplateData struct {
-	Title    string
-	Database *TemplateDatabase
+	Title           string
+	RenderTimestamp int64
+	Database        *TemplateDatabase
 }
 
 type TemplateDatabase struct {

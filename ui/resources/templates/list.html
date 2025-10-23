@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/styles.css?v={{.RenderTimestamp}}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                🧞‍♂️⌛️ <a
+                target="_blank"
+                href="https://github.com/laserattack/servant">
+                    {{.Title}}
+                </a>
+            </h1>
+        </div>
+
+        {{if .Database.Jobs}}
+            <div class="stats">
+                Total jobs: {{len .Database.Jobs}}
+            </div>
+
+            <div class="jobs-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Command</th>
+                            <th>Cron</th>
+                            <th>Status</th>
+                            <th>Timeout</th>
+                            <th>Max Retries</th>
+                            <th>Retry Interval</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $name, $job := .Database.Jobs}}
+                        <tr>
+                            <td class="job-name">{{$name}}</td>
+                            <td>{{$job.Type}}</td>
+                            <td>{{$job.Description}}</td>
+                            <td><code>{{$job.Config.Command}}</code></td>
+                            <td><code>{{$job.Config.CronExpression}}</code></td>
+                            <td>{{$job.Config.Status}}</td>
+                            <td>{{$job.Config.Timeout}}</td>
+                            <td>{{$job.Config.MaxRetries}}</td>
+                            <td>{{$job.Config.RetryInterval}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        {{else}}
+            <div class="no-jobs">
+                <p>No jobs configured</p>
+            </div>
+        {{end}}
+    </div>
+</body>
+</html>
