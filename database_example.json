@@ -10,7 +10,7 @@
 			"config": {
 				"command": "ls -la; sleep 5",
 				"cron_expression": "*/20 * * * * *",
-				"status": "enable",
+				"status": "🟢",
 				"timeout": 10,
 				"max_retries": 0,
 				"retry_interval": 1

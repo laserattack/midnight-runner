@@ -93,7 +93,7 @@ func TestStorageJSONInvalid(t *testing.T) {
 		},
 		{
 			name:      "invalid job type",
-			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "invalid_type", "description": "test", "config": {"command": "echo", "cron_expression": "* * * * *", "status": "enable", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
+			jsonInput: `{"version": "1.0.0", "metadata": {"created_at": 123, "updated_at": 456}, "jobs": {"test": {"type": "invalid_type", "description": "test", "config": {"command": "echo", "cron_expression": "* * * * *", "status": "🟢", "timeout": 30, "max_retries": 3, "retry_interval": 10}, "metadata": {"created_at": 123, "updated_at": 456}}}}`,
 		},
 	}
 

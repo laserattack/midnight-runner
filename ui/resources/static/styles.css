@@ -101,3 +101,10 @@ td {
     color: #1e293b;
     font-weight: 600;
 }
+
+.last-update {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-left: 15px;
+    font-weight: normal;
+}

@@ -11,9 +11,40 @@ import (
 	"servant/storage"
 )
 
+type ListTemplateData struct {
+	Title           string
+	RenderTimestamp int64
+}
+
 func rootHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/list", http.StatusFound)
+	}
+}
+
+func sendDatabase(
+	slogLogger *slog.Logger,
+	db *storage.Database,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		jsonData, err := db.Serialize()
+		if err != nil {
+			slogLogger.Error("Failed to serialize database", "error", err)
+			http.Error(
+				w,
+				"Failed to serialize database",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, err = w.Write(jsonData)
+		if err != nil {
+			slogLogger.Error("Failed to send json database data", "error", err)
+			return
+		}
 	}
 }
 
@@ -25,7 +56,6 @@ func rootHandler() http.HandlerFunc {
 
 func listHandler(
 	slogLogger *slog.Logger,
-	db *storage.Database,
 ) http.HandlerFunc {
 	templateName := "list.html"
 
@@ -35,10 +65,9 @@ func listHandler(
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		templateData := TemplateData{
+		templateData := ListTemplateData{
 			Title:           "servant",
 			RenderTimestamp: time.Now().Unix(),
-			Database:        convertDatabase(db),
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -51,6 +80,7 @@ func listHandler(
 				"Internal Server Error",
 				http.StatusInternalServerError,
 			)
+			return
 		}
 	}
 }

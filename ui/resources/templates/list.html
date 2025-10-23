@@ -14,12 +14,13 @@
                 href="https://github.com/laserattack/servant">
                     {{.Title}}
                 </a>
+                <span id="lastUpdate" class="last-update"></span>
             </h1>
         </div>
 
-        {{if .Database.Jobs}}
+        <div id="content" style="display: none;">
             <div class="stats">
-                Total jobs: {{len .Database.Jobs}}
+                Total jobs: <span id="totalJobs">0</span>
             </div>
 
             <div class="jobs-table">
@@ -37,28 +38,113 @@
                             <th>Retry Interval</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {{range $name, $job := .Database.Jobs}}
-                        <tr>
-                            <td class="job-name">{{$name}}</td>
-                            <td>{{$job.Type}}</td>
-                            <td>{{$job.Description}}</td>
-                            <td><code>{{$job.Config.Command}}</code></td>
-                            <td><code>{{$job.Config.CronExpression}}</code></td>
-                            <td>{{$job.Config.Status}}</td>
-                            <td>{{$job.Config.Timeout}}</td>
-                            <td>{{$job.Config.MaxRetries}}</td>
-                            <td>{{$job.Config.RetryInterval}}</td>
-                        </tr>
-                        {{end}}
+                    <tbody id="jobsTableBody">
                     </tbody>
                 </table>
             </div>
-        {{else}}
-            <div class="no-jobs">
-                <p>No jobs configured</p>
-            </div>
-        {{end}}
+        </div>
+
+        <div id="noJobs" class="no-jobs" style="display: none;">
+            <p>No jobs configured</p>
+        </div>
+
+        <div id="error" class="no-jobs" style="display: none;">
+            <p>Failed to load jobs data</p>
+        </div>
     </div>
+
+    <script>
+        let refreshInterval;
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Unknown';
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+
+        function updateJobsTable(data) {
+            const jobs = data.jobs || {};
+            const jobsArray = Object.entries(jobs);
+            
+            document.getElementById('totalJobs')
+                .textContent = jobsArray.length;
+            document.getElementById('lastUpdate')
+                .textContent =
+                `Last edit: ${formatTimestamp(data.metadata?.updated_at)}`;
+
+            const tableBody = document.getElementById('jobsTableBody');
+            tableBody.innerHTML = '';
+
+            if (jobsArray.length === 0) {
+                document.getElementById('noJobs').style.display = 'block';
+                document.getElementById('content').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                return;
+            }
+
+            jobsArray.forEach(([name, job]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="job-name">${name}</td>
+                    <td>${job.type}</td>
+                    <td>${job.description}</td>
+                    <td><code>${job.config.command}</code></td>
+                    <td><code>${job.config.cron_expression}</code></td>
+                    <td>${job.config.status}</td>
+                    <td>${job.config.timeout}</td>
+                    <td>${job.config.max_retries}</td>
+                    <td>${job.config.retry_interval}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('noJobs').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function loadDatabase() {
+            fetch('/get_database')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`
+                        );
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateJobsTable(data);
+                })
+                .catch(error => {
+                    console.error('Error loading database:', error);
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('content').style.display = 'none';
+                    document.getElementById('noJobs').style.display = 'none';
+                });
+        }
+
+        function startAutoRefresh() {
+            loadDatabase();
+            refreshInterval = setInterval(loadDatabase, 5000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', startAutoRefresh);
+
+        // Stop updates if page inactive
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -20,11 +20,11 @@ func CreateWebServer(
 ) *http.Server {
 	mux := http.NewServeMux()
 
-	//  NOTE: Register routes
-
 	m := createMiddlewaresChain(
 		getLogMiddleware(slogLogger),
 	)
+
+	//  NOTE: Register routes
 
 	mux.Handle(
 		"/static/",
@@ -34,7 +34,8 @@ func CreateWebServer(
 		),
 	)
 	mux.Handle("/", m(rootHandler()))
-	mux.Handle("/list", m(listHandler(slogLogger, db)))
+	mux.Handle("/list", m(listHandler(slogLogger)))
+	mux.Handle("/get_database", m(sendDatabase(slogLogger, db)))
 
 	return &http.Server{
 		Addr:    ":" + port,
