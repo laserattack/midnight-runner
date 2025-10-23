@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -31,8 +32,9 @@ func main() {
 		DatabasePath                  string `short:"d" long:"database" description:"Database file path" required:"true"`
 		DatabaseReloadInterval        uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" default:"10"`
 		DatabaseUpdateAttemptMaxCount uint32 `short:"m" long:"max-update-attempts" description:"Max consecutive database reload attempts before shutdown" default:"10"`
-		WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"8080"`
+		WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
 		WebServerShutdownTimeout      uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
+		MemStatsInterval              uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
 	}
 
 	parser := flags.NewParser(&flagOpts, flags.Default)
@@ -56,6 +58,7 @@ func main() {
 	dbUpdateAttemptMaxCount := flagOpts.DatabaseUpdateAttemptMaxCount
 	webServerPort := fmt.Sprint(flagOpts.WebServerPort)
 	webServerShutdownTimeout := flagOpts.WebServerShutdownTimeout
+	memStatsInterval := flagOpts.MemStatsInterval
 
 	if dbReloadInterval == 0 {
 		slogLogger.Error("Database reload interval must be positive")
@@ -73,6 +76,7 @@ func main() {
 		"max-update-attempts", dbUpdateAttemptMaxCount,
 		"port", webServerPort,
 		"server-shutdown-timeout", webServerShutdownTimeout,
+		"mem-stats-interval", memStatsInterval,
 	)
 
 	//  NOTE: Setup signal's handler
@@ -117,6 +121,20 @@ func main() {
 			"error", err,
 		)
 		return
+	}
+
+	//  NOTE: Memory monitor
+	if memStatsInterval != 0 {
+		memMonitorStopChan := utils.Ticker(func() {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			runtime.GC()
+			utils.LogMemStats(slogLogger)
+		}, time.Second*time.Duration(1))
+		defer close(memMonitorStopChan)
 	}
 
 	//  NOTE: Updating the database in RAM
@@ -179,7 +197,7 @@ func main() {
 		// даже если данные не изменились
 
 		slogLogger.Info("Database needs to be updated")
-		storage.UpdateDatabase(db, dbDonor)
+		storage.UpdateDatabase(db, dbDonor, slogLogger)
 
 		// На этом этапе база данных в RAM уже новая
 

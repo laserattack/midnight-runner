@@ -62,7 +62,7 @@
         function updateJobsTable(data) {
             const jobs = data.jobs || {};
             const jobsArray = Object.entries(jobs);
-            
+
             document.getElementById('totalJobs')
                 .textContent = jobsArray.length;
             document.getElementById('lastUpdate')

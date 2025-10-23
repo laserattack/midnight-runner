@@ -4,6 +4,7 @@ package storage
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"os"
 	"sync"
 )
@@ -24,16 +25,30 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
-//  TODO: Проверить очищается ли память от старых данных?
-// и остается ли в памяти мьютекс базы-донора
+//  TODO: Проверить остается ли в памяти мьютекс базы-донора
 
-func UpdateDatabase(db, dbDonor *Database) {
+func UpdateDatabase(db, dbDonor *Database, slogLogger *slog.Logger) {
 	db.Mu.Lock()
 	defer db.Mu.Unlock()
+
+	// Checking whether old data is being deleted
+	// for jobName, job := range db.Jobs {
+	// 	runtime.SetFinalizer(job, func(j *Job) {
+	// 		slogLogger.Info("OLD JOB COLLECTED BY GC!",
+	// 			"job_name", jobName,
+	// 			"job_addr", fmt.Sprintf("%p", j))
+	// 	})
+	// }
 
 	db.Version = dbDonor.Version
 	db.Metadata = dbDonor.Metadata
 	db.Jobs = dbDonor.Jobs
+
+	// Run gc to delete old data immediately
+	// go func() {
+	// 	time.Sleep(2 * time.Second)
+	// 	runtime.GC()
+	// }()
 }
 
 //  NOTE: Serialize storage structure in byte array
