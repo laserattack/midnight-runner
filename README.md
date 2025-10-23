@@ -1,4 +1,4 @@
-# ⚡️🛠 servant
+# ⚡️⚙️ servant
 
 ## Dependencies
 
