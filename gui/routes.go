@@ -63,7 +63,7 @@ func listHandler(
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		templateData := ListTemplateData{
-			Title:           "servant",
+			Title:           "⚡️⚙️ servant",
 			RenderTimestamp: time.Now().Unix(),
 		}
 

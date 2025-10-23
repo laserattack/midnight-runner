@@ -12,7 +12,7 @@
     <div class="container">
         <div class="header">
             <h1>
-                ⚡️⚙️ <a
+                <a
                 target="_blank"
                 href="https://github.com/laserattack/servant">{{.Title}}</a>
                 <span id="lastUpdate" class="last-update"></span>
@@ -45,14 +45,6 @@
             </div>
         </div>
 
-        <!--
-            TODO: Убрать noJobs, оставить только error
-            и в него просто другой текст писать
-        -->
-        <div id="noJobs" class="no-jobs" style="display: none;">
-            <p>No jobs configured</p>
-        </div>
-
         <div id="error" class="no-jobs" style="display: none;">
             <p>Failed to load jobs data</p>
         </div>
@@ -81,9 +73,10 @@
             tableBody.innerHTML = '';
 
             if (jobsArray.length === 0) {
-                document.getElementById('noJobs').style.display = 'block';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML =
+                    '<p>No jobs configured</p>';
                 document.getElementById('content').style.display = 'none';
-                document.getElementById('error').style.display = 'none';
                 return;
             }
 
@@ -104,7 +97,6 @@
             });
 
             document.getElementById('content').style.display = 'block';
-            document.getElementById('noJobs').style.display = 'none';
             document.getElementById('error').style.display = 'none';
         }
 
@@ -124,8 +116,9 @@
                 .catch(error => {
                     console.error('Error loading database:', error);
                     document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerHTML = 
+                        '<p>Failed to load jobs data</p>';
                     document.getElementById('content').style.display = 'none';
-                    document.getElementById('noJobs').style.display = 'none';
                 });
         }
 
