@@ -133,7 +133,7 @@ func main() {
 			}
 			runtime.GC()
 			utils.LogMemStats(slogLogger)
-		}, time.Second*time.Duration(1))
+		}, time.Second*time.Duration(memStatsInterval))
 		defer close(memMonitorStopChan)
 	}
 
