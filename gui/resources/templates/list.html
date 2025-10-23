@@ -3,17 +3,18 @@
 <head>
     <title>{{.Title}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--
+        TODO: Нужна темная тема
+    -->
     <link rel="stylesheet" href="/static/styles.css?v={{.RenderTimestamp}}">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>
-                🧞‍♂️⌛️ <a
+                ⚡️🛠 <a
                 target="_blank"
-                href="https://github.com/laserattack/servant">
-                    {{.Title}}
-                </a>
+                href="https://github.com/laserattack/servant">{{.Title}}</a>
                 <span id="lastUpdate" class="last-update"></span>
             </h1>
         </div>
@@ -44,6 +45,10 @@
             </div>
         </div>
 
+        <!--
+            TODO: Убрать noJobs, оставить только error
+            и в него просто другой текст писать
+        -->
         <div id="noJobs" class="no-jobs" style="display: none;">
             <p>No jobs configured</p>
         </div>

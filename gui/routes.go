@@ -1,4 +1,4 @@
-package ui
+package gui
 
 import (
 	"fmt"
@@ -10,11 +10,6 @@ import (
 
 	"servant/storage"
 )
-
-type ListTemplateData struct {
-	Title           string
-	RenderTimestamp int64
-}
 
 func rootHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +46,10 @@ func sendDatabase(
 //  TODO: Должен быть какой то значок в статусе джобы
 // говорящий о том, выполнилась ли она последний раз или нет
 
-//  TODO: Темная тема
-//  TODO: Обновление информации периодическое
+type ListTemplateData struct {
+	Title           string
+	RenderTimestamp int64
+}
 
 func listHandler(
 	slogLogger *slog.Logger,

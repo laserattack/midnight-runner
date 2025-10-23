@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"servant/gui"
 	"servant/storage"
-	"servant/ui"
 	"servant/utils"
 
 	"github.com/jessevdk/go-flags"
@@ -209,7 +209,7 @@ func main() {
 	defer close(dbUpdateTickerStopChan)
 
 	//  NOTE: Start Web Server
-	server := ui.CreateWebServer(webServerPort, slogLogger, db)
+	server := gui.CreateWebServer(webServerPort, slogLogger, db)
 	go func() {
 		slogLogger.Info("Starting web server", "port", webServerPort)
 		err := server.ListenAndServe()

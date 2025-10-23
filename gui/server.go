@@ -1,5 +1,5 @@
-// Package ui: web ui
-package ui
+// Package gui: web ui
+package gui
 
 import (
 	"log/slog"
@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	templatesDir = "./ui/resources/templates"
-	staticDir    = "./ui/resources/static"
+	templatesDir = "./gui/resources/templates"
+	staticDir    = "./gui/resources/static"
 )
 
 func CreateWebServer(
