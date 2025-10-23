@@ -4,7 +4,7 @@
 		"updated_at": 1760894444
 	},
 	"jobs": {
-		"shellJob": {
+		"test job": {
 			"type": "shell",
 			"description": "List directory contents every 20 seconds",
 			"config": {
