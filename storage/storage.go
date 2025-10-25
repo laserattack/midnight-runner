@@ -25,14 +25,14 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
-func UpdateDatabase(db, dbDonor *Database, slogLogger *slog.Logger) {
+func UpdateDatabase(db, dbDonor *Database, logger *slog.Logger) {
 	db.Mu.Lock()
 	defer db.Mu.Unlock()
 
 	// Checking whether old data is being deleted
 	// for jobName, job := range db.Jobs {
 	// 	runtime.SetFinalizer(job, func(j *Job) {
-	// 		slogLogger.Info("OLD JOB COLLECTED BY GC!",
+	// 		logger.Info("OLD JOB COLLECTED BY GC!",
 	// 			"job_name", jobName,
 	// 			"job_addr", fmt.Sprintf("%p", j))
 	// 	})

@@ -17,13 +17,13 @@ func rootHandler() http.HandlerFunc {
 }
 
 func sendDatabase(
-	slogLogger *slog.Logger,
+	logger *slog.Logger,
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		jsonData, err := db.Serialize()
 		if err != nil {
-			slogLogger.Error("Failed to serialize database", "error", err)
+			logger.Error("Failed to serialize database", "error", err)
 			http.Error(
 				w,
 				"Failed to serialize database",
@@ -36,7 +36,7 @@ func sendDatabase(
 		w.Header().Set("Cache-Control", "no-cache")
 		_, err = w.Write(jsonData)
 		if err != nil {
-			slogLogger.Error("Failed to send json database data", "error", err)
+			logger.Error("Failed to send json database data", "error", err)
 			return
 		}
 	}
@@ -51,11 +51,11 @@ type ListTemplateData struct {
 }
 
 func listHandler(
-	slogLogger *slog.Logger,
+	logger *slog.Logger,
 ) http.HandlerFunc {
 	templateName := "list.html"
 
-	tmpl, fallbackHandler := getTemplateAndFallback(slogLogger, templateName)
+	tmpl, fallbackHandler := getTemplateAndFallback(logger, templateName)
 	if tmpl == nil {
 		return fallbackHandler
 	}
@@ -70,7 +70,7 @@ func listHandler(
 
 		err := tmpl.ExecuteTemplate(w, templateName, templateData)
 		if err != nil {
-			slogLogger.Error("Failed to execute template", "error", err)
+			logger.Error("Failed to execute template", "error", err)
 			http.Error(
 				w,
 				"Internal Server Error",
@@ -92,14 +92,14 @@ func listHandler(
 // чтобы ничего не парсить
 
 func getTemplateAndFallback(
-	slogLogger *slog.Logger,
+	logger *slog.Logger,
 	templateName string,
 ) (*template.Template, http.HandlerFunc) {
 	tmpl, err := template.New(templateName).
 		Funcs(template.FuncMap{}).
 		ParseFS(templatesFS, templateName)
 	if err != nil {
-		slogLogger.Error("Failed to parse template", "error", err)
+		logger.Error("Failed to parse template", "error", err)
 		return nil, func(w http.ResponseWriter, r *http.Request) {
 			http.Error(
 				w,

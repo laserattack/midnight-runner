@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-func LogMemStats(slogLogger *slog.Logger) {
+func LogMemStats(logger *slog.Logger) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
@@ -14,7 +14,7 @@ func LogMemStats(slogLogger *slog.Logger) {
 		return float64(bytes) / 1024 / 1024
 	}
 
-	slogLogger.Info("Memory stats",
+	logger.Info("Memory stats",
 		"Heap allocated memory (MB)", fmt.Sprintf("%.2f", bytesToMB(m.HeapAlloc)),
 		"Heap objects count", m.HeapObjects,
 		"Garbage collections count", m.NumGC,

@@ -2,12 +2,12 @@ package storage
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"servant/extjob"
 
 	"github.com/reugn/go-quartz/job"
-	"github.com/reugn/go-quartz/logger"
 	"github.com/reugn/go-quartz/quartz"
 )
 
@@ -15,7 +15,7 @@ func RegisterJobs(
 	// quartz.Scheduler = &StdScheduler, 8 bytes
 	scheduler quartz.Scheduler,
 	db *Database,
-	quartzLogger *logger.SlogLogger,
+	logger *slog.Logger,
 ) error {
 	db.Mu.RLock()
 	defer db.Mu.RUnlock()
@@ -24,7 +24,7 @@ func RegisterJobs(
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell {
 			//  TODO: Не уверен что хороший вариант так обрывать регистрацию
-			err := registerShellJob(scheduler, db, jk, j, quartzLogger)
+			err := registerShellJob(scheduler, db, jk, j, logger)
 			if err != nil {
 				return err
 			}
@@ -41,7 +41,7 @@ func registerShellJob(
 	jobKey string,
 	// instead of a heavy structure pass a pointer
 	j *Job,
-	quartzLogger *logger.SlogLogger,
+	logger *slog.Logger,
 ) error {
 	description := j.Description
 	command := j.Config.Command
@@ -65,13 +65,13 @@ func registerShellJob(
 
 		switch status {
 		case job.StatusOK:
-			quartzLogger.Info("Command completed successfully", logFields...)
+			logger.Info("Command completed successfully", logFields...)
 		case job.StatusFailure:
 			select {
 			case <-ctx.Done():
-				quartzLogger.Error("Command timeout exceeded", logFields...)
+				logger.Error("Command timeout exceeded", logFields...)
 			default:
-				quartzLogger.Error("Command failed", logFields...)
+				logger.Error("Command failed", logFields...)
 			}
 		}
 	}
@@ -81,7 +81,7 @@ func registerShellJob(
 		j.Config.Status = StatusActive
 		db.Mu.Unlock()
 
-		quartzLogger.Info("Start command execution", logFields...)
+		logger.Info("Start command execution", logFields...)
 	}
 
 	quartzJob := extjob.NewShellJobWithCallbacks(

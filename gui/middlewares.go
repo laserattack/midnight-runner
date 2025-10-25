@@ -16,10 +16,10 @@ func createMiddlewaresChain(ms ...middleware) middleware {
 	}
 }
 
-func logReqMiddleware(slogLogger *slog.Logger) middleware {
+func logReqMiddleware(logger *slog.Logger) middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			slogLogger.Info("HTTP request",
+			logger.Info("HTTP request",
 				"method", r.Method,
 				"path", r.URL.Path,
 				"remote_addr", r.RemoteAddr,
