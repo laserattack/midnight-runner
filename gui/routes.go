@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"servant/storage"
@@ -96,10 +95,9 @@ func getTemplateAndFallback(
 	slogLogger *slog.Logger,
 	templateName string,
 ) (*template.Template, func(w http.ResponseWriter, r *http.Request)) {
-	templatePath := filepath.Join(templatesDir, templateName)
 	tmpl, err := template.New(templateName).
 		Funcs(template.FuncMap{}).
-		ParseFiles(templatePath)
+		ParseFS(templatesFS, templateName)
 	if err != nil {
 		slogLogger.Error("Failed to parse template", "error", err)
 		return nil, func(w http.ResponseWriter, r *http.Request) {

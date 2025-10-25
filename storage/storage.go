@@ -25,8 +25,6 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
-//  TODO: Проверить остается ли в памяти мьютекс базы-донора
-
 func UpdateDatabase(db, dbDonor *Database, slogLogger *slog.Logger) {
 	db.Mu.Lock()
 	defer db.Mu.Unlock()

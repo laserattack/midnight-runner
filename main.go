@@ -20,9 +20,6 @@ import (
 	"github.com/reugn/go-quartz/quartz"
 )
 
-//  TODO: Нужна какая то упраляющая программа
-// которая будет запускать процесс этой программы
-
 func main() {
 	//  NOTE: Setup logger
 	slogLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
