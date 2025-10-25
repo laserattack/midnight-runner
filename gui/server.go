@@ -29,7 +29,7 @@ func CreateWebServer(
 	mux := http.NewServeMux()
 
 	m := createMiddlewaresChain(
-		getLogMiddleware(slogLogger),
+		logReqMiddleware(slogLogger),
 	)
 
 	//  NOTE: Register routes

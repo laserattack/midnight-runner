@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -32,6 +33,7 @@ func main() {
 		WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
 		WebServerShutdownTimeout      uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
 		MemStatsInterval              uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
+		ServerLog                     bool   `long:"server-log" description:"Log messages from HTTP server"`
 	}
 
 	parser := flags.NewParser(&flagOpts, flags.Default)
@@ -56,6 +58,7 @@ func main() {
 	webServerPort := fmt.Sprint(flagOpts.WebServerPort)
 	webServerShutdownTimeout := flagOpts.WebServerShutdownTimeout
 	memStatsInterval := flagOpts.MemStatsInterval
+	serverLog := flagOpts.ServerLog
 
 	if dbReloadInterval == 0 {
 		slogLogger.Error("Database reload interval must be positive")
@@ -224,7 +227,18 @@ func main() {
 	defer close(dbUpdateTickerStopChan)
 
 	//  NOTE: Start Web Server
-	server := gui.CreateWebServer(webServerPort, slogLogger, db)
+	var server *http.Server
+
+	if serverLog {
+		server = gui.CreateWebServer(webServerPort, slogLogger, db)
+	} else {
+		discardHandler := slog.NewTextHandler(io.Discard, nil)
+		server = gui.CreateWebServer(
+			webServerPort,
+			slog.New(discardHandler),
+			db,
+		)
+	}
 	go func() {
 		slogLogger.Info("Starting web server", "port", webServerPort)
 		err := server.ListenAndServe()
