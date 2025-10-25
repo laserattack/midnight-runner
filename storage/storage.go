@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-// A Mu.ex for safe operation with a database stored on disk
+// A Mutex for safe operation with a database stored on disk
 var databaseFileMutex sync.RWMutex
 
 //  NOTE: Database, metadata
