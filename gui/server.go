@@ -3,7 +3,6 @@ package gui
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -15,23 +14,12 @@ import (
 var resourcesFS embed.FS
 
 var (
-	staticFS    fs.FS
-	templatesFS fs.FS
+	// fs.Sub returns an error only if the 2nd argument
+	// is a syntactically invalid path. Since these
+	// are valid string literals, error handling is unnecessary
+	staticFS, _    = fs.Sub(resourcesFS, "resources/static")
+	templatesFS, _ = fs.Sub(resourcesFS, "resources/templates")
 )
-
-func init() {
-	var err error
-
-	staticFS, err = fs.Sub(resourcesFS, "resources/static")
-	if err != nil {
-		panic(fmt.Sprintf("failed to create static FS: %v", err))
-	}
-
-	templatesFS, err = fs.Sub(resourcesFS, "resources/templates")
-	if err != nil {
-		panic(fmt.Sprintf("failed to create templates FS: %v", err))
-	}
-}
 
 func CreateWebServer(
 	port string,
