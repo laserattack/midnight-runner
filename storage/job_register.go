@@ -17,8 +17,8 @@ func RegisterJobs(
 	db *Database,
 	logger *slog.Logger,
 ) error {
-	db.Mu.RLock()
-	defer db.Mu.RUnlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {
@@ -57,9 +57,9 @@ func registerShellJob(
 	}
 
 	afterExec := func(ctx context.Context, qj *job.ShellJob) {
-		db.Mu.Lock()
+		db.mu.Lock()
 		j.Config.Status = StatusEnable
-		db.Mu.Unlock()
+		db.mu.Unlock()
 
 		status := qj.JobStatus()
 
@@ -77,9 +77,9 @@ func registerShellJob(
 	}
 
 	beforeExec := func(ctx context.Context, qj *job.ShellJob) {
-		db.Mu.Lock()
+		db.mu.Lock()
 		j.Config.Status = StatusActive
-		db.Mu.Unlock()
+		db.mu.Unlock()
 
 		logger.Info("Start command execution", logFields...)
 	}

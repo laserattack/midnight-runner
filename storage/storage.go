@@ -19,15 +19,26 @@ type Metadata struct {
 }
 
 type Database struct {
-	Mu       sync.RWMutex
+	mu       sync.RWMutex
 	Version  string   `json:"version"`
 	Metadata Metadata `json:"metadata"`
 	Jobs     Jobs     `json:"jobs"`
 }
 
+func (db *Database) IsSameVersion(db2 *Database) bool {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	db2.mu.RLock()
+	defer db2.mu.RUnlock()
+
+	return db.Metadata.UpdatedAt == db2.Metadata.UpdatedAt
+}
+
 func UpdateDatabase(db, dbDonor *Database, logger *slog.Logger) {
-	db.Mu.Lock()
-	defer db.Mu.Unlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	dbDonor.mu.RLock()
+	defer dbDonor.mu.RUnlock()
 
 	// Checking whether old data is being deleted
 	// for jobName, job := range db.Jobs {
@@ -52,8 +63,8 @@ func UpdateDatabase(db, dbDonor *Database, logger *slog.Logger) {
 //  NOTE: Serialize storage structure in byte array
 
 func (db *Database) Serialize() ([]byte, error) {
-	db.Mu.RLock()
-	defer db.Mu.RUnlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 
 	return json.MarshalIndent(db, "", "    ")
 }
