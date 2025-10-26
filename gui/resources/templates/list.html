@@ -51,8 +51,34 @@
         let refreshInterval;
 
         function startAutoRefresh() {
-            loadDatabase();
-            refreshInterval = setInterval(loadDatabase, 1000);
+
+            function refreshWithHandling() {
+                loadDatabase()
+                    .then(data => {
+                        updateJobsTable(data);
+                        document.getElementById('content')
+                            .style
+                            .display = 'block';
+                        document.getElementById('error')
+                            .style
+                            .display = 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error loading database:', error);
+                        document.getElementById('error')
+                            .style
+                            .display = 'block';
+                        document.getElementById('error')
+                            .innerHTML = '<p>Failed to load jobs data</p>';
+                        document.getElementById('content')
+                            .style
+                            .display = 'none';
+                    });
+            }
+
+            refreshWithHandling();
+
+            refreshInterval = setInterval(refreshWithHandling, 1000);
         }
 
         function stopAutoRefresh() {

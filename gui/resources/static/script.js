@@ -46,24 +46,11 @@ function updateJobsTable(data) {
 }
 
 function loadDatabase() {
-    fetch('/get_database')
+    return fetch('/get_database')
         .then(response => {
             if (!response.ok) {
-                throw new Error(
-                    `HTTP error! status: ${response.status}`
-                );
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
-        })
-        .then(data => {
-            updateJobsTable(data);
-        })
-        .catch(error => {
-            console.error('Error loading database:', error);
-            document.getElementById('error').style.display = 'block';
-            document.getElementById('error').innerHTML =
-                '<p>Failed to load jobs data</p>';
-            document.getElementById('content').style.display = 'none';
         });
 }
-

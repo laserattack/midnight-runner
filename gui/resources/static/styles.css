@@ -77,11 +77,6 @@ th {
 
 tbody tr {
     border-bottom: 1px solid #e2e8f0;
-    transition: background-color 0.2s ease;
-}
-
-tbody tr:hover {
-    background: #f1f5f9;
 }
 
 tbody tr:last-child {
