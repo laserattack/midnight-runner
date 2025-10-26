@@ -8,23 +8,26 @@ import "time"
 // Run func at the specified interval in a separate goroutine
 // Returns the channel for stopping the ticker
 
-func Ticker(fn func(), interval time.Duration) chan struct{} {
+func Ticker(
+	fn func(),
+	interval time.Duration,
+) (stopCh chan struct{}) {
 	if interval <= 0 {
 		interval = time.Second
 	}
 	ticker := time.NewTicker(interval)
-	stopChan := make(chan struct{})
+	stopCh = make(chan struct{})
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				fn()
-			case <-stopChan:
+			case <-stopCh:
 				ticker.Stop()
 				return
 			}
 		}
 	}()
 
-	return stopChan
+	return stopCh
 }

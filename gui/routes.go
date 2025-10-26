@@ -94,7 +94,7 @@ func listHandler(
 func getTemplateAndFallback(
 	logger *slog.Logger,
 	templateName string,
-) (*template.Template, http.HandlerFunc) {
+) (parsedTemplate *template.Template, fallbackHandler http.HandlerFunc) {
 	tmpl, err := template.New(templateName).
 		Funcs(template.FuncMap{}).
 		ParseFS(templatesFS, templateName)
