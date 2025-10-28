@@ -10,9 +10,6 @@ function updateJobsTable(data) {
 
     document.getElementById('totalJobs')
         .textContent = jobsArray.length;
-    document.getElementById('lastUpdate')
-        .textContent =
-        `Last edit: ${formatTimestamp(data.metadata?.updated_at)}`;
 
     const tableBody = document.getElementById('jobsTableBody');
     tableBody.innerHTML = '';

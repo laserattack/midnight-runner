@@ -4,7 +4,7 @@
     <title>{{.Title}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--  TODO: Переключалку тем сделать надо (хранить в бд тему) -->
-    <link rel="stylesheet" href="/static/styles.css?v={{.RenderTimestamp}}">
+    <link rel="stylesheet" href="/static/dark_styles.css?v={{.RenderTimestamp}}">
 </head>
 <body>
     <div class="container">
@@ -100,6 +100,9 @@
                 loadDatabase()
                     .then(data => {
                         updateJobsTable(data);
+                        document.getElementById('lastUpdate')
+                            .textContent =
+                            `Last edit: ${formatTimestamp(data.metadata?.updated_at)}`;
                         document.getElementById('content')
                             .style
                             .display = 'block';
