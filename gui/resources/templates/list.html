@@ -3,6 +3,7 @@
 <head>
     <title>{{.Title}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--  TODO: Переключалку тем сделать надо (хранить в бд тему) -->
     <link rel="stylesheet" href="/static/styles.css?v={{.RenderTimestamp}}">
 </head>
 <body>
@@ -13,7 +14,7 @@
                     href="https://github.com/laserattack/servant">
                     {{.Title}}</a>
                 <button class="btn"
-                    onclick="openAddJobModal()" 
+                    onclick="openAddJobModal()"
                     style="margin: 0 15px; vertical-align: middle;">
                     Add/edit job</button>
                 <span id="lastUpdate" class="last-update"></span>
