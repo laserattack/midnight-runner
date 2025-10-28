@@ -107,7 +107,7 @@ body {
 .last-update {
     font-size: 0.8rem;
     color: #64748b;
-    font-weight: normal;
+    font-weight: bold;
 }
 
 .modal {
