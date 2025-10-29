@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"servant/extjob"
+	"midnight-runner/extjob"
 
 	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/quartz"

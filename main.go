@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"servant/gui"
-	"servant/storage"
-	"servant/utils"
+	"midnight-runner/gui"
+	"midnight-runner/storage"
+	"midnight-runner/utils"
 
 	"github.com/jessevdk/go-flags"
 	qLogger "github.com/reugn/go-quartz/logger"

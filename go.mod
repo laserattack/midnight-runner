@@ -1,4 +1,4 @@
-module servant
+module midnight-runner
 
 go 1.25.1
 

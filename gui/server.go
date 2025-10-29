@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"servant/storage"
+	"midnight-runner/storage"
 )
 
 //go:embed resources/*

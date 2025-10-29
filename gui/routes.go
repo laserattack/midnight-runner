@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"servant/storage"
+	"midnight-runner/storage"
 )
 
 func rootHandler() http.HandlerFunc {
