@@ -100,7 +100,7 @@
 
         function startAutoRefresh() {
             function refreshWithHandling() {
-                loadDatabase()
+                receiveJSON("/api/get_database")
                     .then(data => {
                         updateJobsTable(data);
                         document.getElementById('lastUpdate')
@@ -163,17 +163,9 @@
 
             // TODO: Реализовать отправку данных на сервер
 
+            sendJSON(jobData, "/api/change_job")
             closeAddJobModal();
-
-            alert('Done!');
         });
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('addJobModal');
-            if (event.target == modal) {
-                closeAddJobModal();
-            }
-        }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {

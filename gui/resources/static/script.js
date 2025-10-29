@@ -1,3 +1,29 @@
+function sendJSON(jsonData, endpoint) {
+    return fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    });
+}
+
+function receiveJSON(endpoint) {
+    return fetch(endpoint)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        });
+}
+
 function formatTimestamp(timestamp) {
     if (!timestamp) return 'Unknown';
     const date = new Date(timestamp * 1000);
@@ -42,12 +68,3 @@ function updateJobsTable(data) {
     document.getElementById('error').style.display = 'none';
 }
 
-function loadDatabase() {
-    return fetch('/get_database')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        });
-}
