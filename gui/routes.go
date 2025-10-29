@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -16,8 +17,39 @@ func rootHandler() http.HandlerFunc {
 	}
 }
 
-func changeJob() http.HandlerFunc {
+func changeJob(
+	logger *slog.Logger,
+	db *storage.Database,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var jobData struct {
+			Name          string `json:"name"`
+			Description   string `json:"description"`
+			Command       string `json:"command"`
+			Cron          string `json:"cron"`
+			Timeout       int    `json:"timeout"`
+			MaxRetries    int    `json:"maxRetries"`
+			RetryInterval int    `json:"retryInterval"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&jobData)
+		if err != nil {
+			logger.Error("Error decode job json data", "error", err)
+			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		j := storage.ShellJob(
+			jobData.Description,
+			jobData.Command,
+			jobData.Cron,
+			jobData.Timeout,
+			jobData.MaxRetries,
+			jobData.RetryInterval,
+		)
+
+		db.SetJob(j, jobData.Name)
 	}
 }
 

@@ -20,9 +20,18 @@ type Metadata struct {
 
 type Database struct {
 	mu       sync.RWMutex
+	filepath string
 	Version  string   `json:"version"`
 	Metadata Metadata `json:"metadata"`
 	Jobs     Jobs     `json:"jobs"`
+}
+
+func (db *Database) SetJob(j *Job, k string) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	db.Jobs[k] = j
+	db.Metadata.UpdatedAt = j.Metadata.UpdatedAt
 }
 
 func (db *Database) IsSameVersion(db2 *Database) bool {
@@ -34,30 +43,38 @@ func (db *Database) IsSameVersion(db2 *Database) bool {
 	return db.Metadata.UpdatedAt == db2.Metadata.UpdatedAt
 }
 
-func UpdateDatabase(db, dbDonor *Database, logger *slog.Logger) {
+func ActualizeDatabase(
+	db,
+	dbDonor *Database,
+	logger *slog.Logger,
+) (needRestartScheduler bool, err error) {
 	db.mu.Lock()
-	defer db.mu.Unlock()
+
 	dbDonor.mu.RLock()
 	defer dbDonor.mu.RUnlock()
 
-	// Checking whether old data is being deleted
-	// for jobName, job := range db.Jobs {
-	// 	runtime.SetFinalizer(job, func(j *Job) {
-	// 		logger.Info("OLD JOB COLLECTED BY GC!",
-	// 			"job_name", jobName,
-	// 			"job_addr", fmt.Sprintf("%p", j))
-	// 	})
-	// }
+	// No change
+	if db.Metadata.UpdatedAt == dbDonor.Metadata.UpdatedAt {
+		db.mu.Unlock()
+		return false, nil
+	}
 
-	db.Version = dbDonor.Version
-	db.Metadata = dbDonor.Metadata
-	db.Jobs = dbDonor.Jobs
+	// Actualize in ram
+	if db.Metadata.UpdatedAt < dbDonor.Metadata.UpdatedAt {
+		db.Version = dbDonor.Version
+		db.Metadata = dbDonor.Metadata
+		db.Jobs = dbDonor.Jobs
+		db.mu.Unlock()
+		return true, nil
+	}
 
-	// Run gc to delete old data immediately
-	// go func() {
-	// 	time.Sleep(2 * time.Second)
-	// 	runtime.GC()
-	// }()
+	// Actualize in file
+	db.mu.Unlock()
+	if err := SaveToFile(db, db.filepath); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 //  NOTE: Serialize storage structure in byte array
@@ -96,7 +113,13 @@ func LoadFromFile(filepath string) (*Database, error) {
 		return nil, err
 	}
 
-	return Deserialize(data)
+	db, err := Deserialize(data)
+	if err != nil {
+		return nil, err
+	}
+
+	db.filepath = filepath
+	return db, nil
 }
 
 //  NOTE: Save database to file

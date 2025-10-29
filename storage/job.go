@@ -1,5 +1,7 @@
 package storage
 
+import "time"
+
 //  NOTE: Job structure
 
 type JobConfig struct {
@@ -19,3 +21,24 @@ type Job struct {
 }
 
 type Jobs map[string]*Job
+
+func ShellJob(
+	description, command, cronExpression string,
+	timeout, maxRetries, retryInterval int,
+) *Job {
+	return &Job{
+		Type:        TypeShell,
+		Description: description,
+		Config: JobConfig{
+			Command:        command,
+			CronExpression: cronExpression,
+			Status:         StatusEnable,
+			Timeout:        timeout,
+			MaxRetries:     maxRetries,
+			RetryInterval:  retryInterval,
+		},
+		Metadata: Metadata{
+			UpdatedAt: time.Now().Unix(),
+		},
+	}
+}

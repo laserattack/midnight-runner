@@ -167,8 +167,7 @@ func main() {
 			return
 		}
 
-		// Начало процесса обновления базы в RAM
-		logger.Info("Database updating in RAM")
+		logger.Info("Database actualizing...")
 
 		dbDonor, err := storage.LoadFromFile(dbPath)
 		if err != nil {
@@ -180,33 +179,32 @@ func main() {
 			return
 		}
 
-		// Если мы тут, то загрузка актуальной базы из файла прошла успешно
-
-		// updated_at field in json should be updated with any change in db
-
-		if db.IsSameVersion(dbDonor) &&
-			dbUpdateAttemptCounter.Load() == 0 {
-			logger.Info("Database does not require updating")
+		needRestartScheduler, err := storage.ActualizeDatabase(
+			db,
+			dbDonor,
+			logger,
+		)
+		// Не актуализировалась
+		if err != nil {
+			logger.Warn("Actualize database error", "error", err)
+			dbUpdateAttemptCounter.Add(1)
 			return
 		}
 
-		// Сюда заходим если база в RAM неактуальная или если
-		// какие то ошибки были во время предыдущих попыток обновления
-		// эти ошибки могут означать что
-		// 1. Планировщик не смог корректно очиститься от старых работ
-		// 2. Не все новые работы были зарегистрированы
+		// Актуализировалась
+		// (на этом моменте базы в файле и в RAM идентичны)
 
-		// Т.е. после ошибки надо перерегистрировать задачи,
-		// даже если данные не изменились
+		// При актуализации НЕ обновилась в RAM?
+		// тогда выходим в случае если попытка нулевая
+		// (не было ошибок)
+		if !needRestartScheduler && dbUpdateAttemptCounter.Load() == 0 {
+			logger.Info("Database is up-to-date. No need to restart scheduler")
+			return
+		}
 
-		logger.Info("Database needs to be updated")
-		storage.UpdateDatabase(db, dbDonor, logger)
-
-		// На этом этапе база данных в RAM уже новая
+		// Обновилась в RAM => надо шедулер перезапустить
 
 		if err = scheduler.Clear(); err != nil {
-			// В базе данных уже новые работы, но планировщик не очищается.
-			// Продолжает содержать старые работы => они будут выполняться
 			logger.Warn("Scheduler clear failed",
 				"error", err,
 			)
@@ -216,7 +214,6 @@ func main() {
 
 		err = storage.RegisterJobs(scheduler, db, logger)
 		if err != nil {
-			// Не все новые работы зареганы
 			logger.Warn("Jobs register failed",
 				"error", err,
 			)
