@@ -161,8 +161,6 @@
                 retryInterval: parseInt(formData.get('retryInterval'))
             };
 
-            // TODO: Реализовать отправку данных на сервер
-
             sendJSON(jobData, "/api/change_job")
             closeAddJobModal();
         });
