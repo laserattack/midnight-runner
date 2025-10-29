@@ -22,6 +22,7 @@ func changeJob(
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		//  TODO: Тут CronExpression должно быть
 		var jobData struct {
 			Name          string `json:"name"`
 			Description   string `json:"description"`
