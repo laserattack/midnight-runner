@@ -38,7 +38,12 @@ func changeJob(
 			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer r.Body.Close()
+
+		defer func() {
+			if err = r.Body.Close(); err != nil {
+				logger.Error("Failed to close request body", "error", err)
+			}
+		}()
 
 		j := storage.ShellJob(
 			jobData.Description,
