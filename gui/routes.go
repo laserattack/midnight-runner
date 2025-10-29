@@ -16,6 +16,11 @@ func rootHandler() http.HandlerFunc {
 	}
 }
 
+func changeJob() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
 func sendDatabase(
 	logger *slog.Logger,
 	db *storage.Database,
