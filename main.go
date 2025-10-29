@@ -222,7 +222,7 @@ func main() {
 		}
 
 		dbUpdateAttemptCounter.Store(0)
-		logger.Info("Database successfully updated in RAM")
+		logger.Info("Database successfully actualized in RAM")
 	}, time.Second*time.Duration(dbReloadInterval))
 	defer close(dbUpdateTickerStopChan)
 
