@@ -3,7 +3,6 @@
 <head>
     <title>{{.Title}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!--  TODO: Переключалку тем сделать надо (хранить в бд тему) -->
     <link rel="stylesheet"
     href="/static/dark_styles.css?v={{.RenderTimestamp}}">
 </head>
@@ -14,6 +13,9 @@
                 <a target="_blank"
                     href="https://github.com/laserattack/midnight-runner">
                     {{.Title}}</a>
+                <!--  TODO: Если джоба есть то поля должны быть
+                    заполены ее данными актуальными
+                -->
                 <button class="btn"
                     onclick="openAddJobModal()"
                     style="margin: 0 15px; vertical-align: middle;">

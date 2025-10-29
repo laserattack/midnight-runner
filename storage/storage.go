@@ -34,15 +34,6 @@ func (db *Database) SetJob(j *Job, k string) {
 	db.Metadata.UpdatedAt = j.Metadata.UpdatedAt
 }
 
-func (db *Database) IsSameVersion(db2 *Database) bool {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-	db2.mu.RLock()
-	defer db2.mu.RUnlock()
-
-	return db.Metadata.UpdatedAt == db2.Metadata.UpdatedAt
-}
-
 func ActualizeDatabase(
 	db,
 	dbDonor *Database,
