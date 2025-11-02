@@ -31,6 +31,9 @@ type flagOpts struct {
 	ServerLog                     bool   `long:"server-log" description:"Log messages from HTTP server"`
 }
 
+//  TODO: Сделать флаг -o / --once который если прилетает
+// то программа выполняет сразу все джобы из базы 1 раз и завершается
+
 func main() {
 	//  NOTE: Setup logger
 
