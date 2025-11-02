@@ -24,10 +24,10 @@
             </h1>
         </div>
 
-        <div id="addJobModal" class="modal">
+        <div id="setJobModal" class="modal">
             <div class="modal-content">
                 <h2>Set job</h2>
-                <form id="addJobForm">
+                <form id="setJobForm">
                     <div class="form-group">
                         <label>Name:</label>
                         <input type="text" name="name" required>
@@ -143,15 +143,15 @@
 
         // Функции для работы с модальным окном
         function openAddJobModal() {
-            document.getElementById('addJobModal').style.display = 'block';
+            document.getElementById('setJobModal').style.display = 'block';
         }
 
         function closeAddJobModal() {
-            document.getElementById('addJobModal').style.display = 'none';
-            document.getElementById('addJobForm').reset();
+            document.getElementById('setJobModal').style.display = 'none';
+            document.getElementById('setJobForm').reset();
         }
 
-        document.getElementById('addJobForm')
+        document.getElementById('setJobForm')
             .addEventListener('submit', function(e) {
                 e.preventDefault();
 
@@ -170,9 +170,8 @@
                 closeAddJobModal();
             });
 
-        //  TODO: addJob -> setJob сделать везде
         function deleteJob() {
-            const formData = new FormData(document.getElementById('addJobForm'));
+            const formData = new FormData(document.getElementById('setJobForm'));
             const jobData = {
                 name: formData.get('name')
             };
