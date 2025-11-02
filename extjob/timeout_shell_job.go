@@ -23,12 +23,12 @@ func (j *TimeoutShellJob) Execute(ctx context.Context) error {
 
 	var err error
 	if j.timeout <= 0 {
-		return j.shellJob.Execute(ctx)
+		err = j.shellJob.Execute(ctx)
+	} else {
+		timeoutCtx, cancel := context.WithTimeout(ctx, j.timeout)
+		defer cancel()
+		err = j.shellJob.Execute(timeoutCtx)
 	}
-
-	timeoutCtx, cancel := context.WithTimeout(ctx, j.timeout)
-	defer cancel()
-	err = j.shellJob.Execute(timeoutCtx)
 
 	if j.afterExec != nil {
 		j.afterExec(ctx, j.shellJob)
