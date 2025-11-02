@@ -22,7 +22,7 @@ func RegisterJobs(
 
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {
-		if j.Type == TypeShell {
+		if j.Type == TypeShell && j.Config.Status != StatusDisable {
 			//  TODO: Не уверен что хороший вариант так обрывать регистрацию
 			err := registerShellJob(scheduler, db, jk, j, logger)
 			if err != nil {

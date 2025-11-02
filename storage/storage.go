@@ -27,6 +27,27 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
+func (db *Database) ToggleJob(name string) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	var j *Job
+	var exists bool
+
+	if j, exists = db.Jobs[name]; !exists {
+		return
+	}
+
+	switch j.Config.Status {
+	case StatusActive, StatusEnable:
+		j.Config.Status = StatusDisable
+	case StatusDisable:
+		j.Config.Status = StatusEnable
+	}
+
+	db.Metadata.UpdatedAt = time.Now().Unix()
+}
+
 func (db *Database) DeleteJob(name string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()

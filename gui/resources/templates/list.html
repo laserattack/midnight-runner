@@ -60,6 +60,8 @@
                         value="10" pattern="[0-9]*">
                     </div>
                     <div class="btn-container">
+                        <button type="button" class="btn" id="toggleBtn"
+                            onclick="toggleJob()">Toggle</button>
                         <button type="button" class="btn" id="cancelBtn"
                             onclick="deleteJob()">Delete</button>
                         <button type="submit" class="btn">Save</button>
@@ -183,6 +185,22 @@
                 .catch(err => {
                     console.error("Failed to delete job:", err);
                     alert("Failed to delete job");
+                });
+        }
+
+        function toggleJob() {
+            const formData = new FormData(document.getElementById('setJobForm'));
+            const jobData = {
+                name: formData.get('name')
+            };
+
+            sendJSON(jobData, "/api/toggle_job")
+                .then(() => {
+                    closeAddJobModal();
+                })
+                .catch(err => {
+                    console.error("Failed to toggle job:", err);
+                    alert("Failed to toggle job");
                 });
         }
 
