@@ -84,6 +84,8 @@ func main() {
 
 	//  NOTE: Load database
 
+	//  TODO: Сделать какую нибудь базу данных по умолчанию,
+	// чтобы можно было запускать без аргумента
 	logger.Info("Loading database", "file", dbPath)
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
