@@ -86,6 +86,9 @@ func main() {
 
 	//  TODO: Сделать какую нибудь базу данных по умолчанию,
 	// чтобы можно было запускать без аргумента
+
+	//  TODO: Изначально статусом работы не может быть active
+
 	logger.Info("Loading database", "file", dbPath)
 	db, err := storage.LoadFromFile(dbPath)
 	if err != nil {
@@ -149,9 +152,6 @@ func main() {
 	// Without atomic, a situation is possible where
 	// 2 goroutines increment a variable at the same time and
 	// it increases by 1 instead of 2
-
-	//  TODO: Добавить возможность запускать без
-	// логов про обновление базы данных
 
 	var dbUpdateAttemptCounter atomic.Uint32
 	dbUpdateTickerStopChan := utils.Ticker(func() {

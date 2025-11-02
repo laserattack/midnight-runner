@@ -70,9 +70,9 @@ func registerShellJob(
 		case job.StatusFailure:
 			select {
 			case <-ctx.Done():
-				logger.Error("Command timeout exceeded", logFields...)
+				logger.Warn("Command timeout exceeded", logFields...)
 			default:
-				logger.Error("Command failed", logFields...)
+				logger.Warn("Command failed", logFields...)
 			}
 		}
 	}
