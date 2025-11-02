@@ -45,6 +45,7 @@ func CreateWebServer(
 	mux.Handle("/list", m(listHandler(logger)))
 	mux.Handle("/api/get_database", m(sendDatabase(logger, db)))
 	mux.Handle("/api/change_job", m(changeJob(logger, db)))
+	mux.Handle("/api/delete_job", m(deleteJob(logger, db)))
 
 	return &http.Server{
 		Addr:    ":" + port,

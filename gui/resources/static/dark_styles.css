@@ -179,14 +179,6 @@ body {
         background: #374151;
     }
 
-    &[type="cancel"] {
-        background: #ef4444;
-        color: white;
-        &:hover {
-            background: #dc2626;
-        }
-    }
-
     &[type="submit"] {
         background: #4f46e5;
         color: white;
@@ -200,6 +192,14 @@ body {
         color: white;
         &:hover {
             background: #475569;
+        }
+    }
+
+    &#cancelBtn {
+        background: #ef4444; // red-500
+        color: white;
+        &:hover {
+            background: #dc2626; // red-600
         }
     }
 }

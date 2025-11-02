@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"time"
 )
 
 // A Mutex for safe operation with a database stored on disk
@@ -26,12 +27,24 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
+func (db *Database) DeleteJob(name string) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if _, exists := db.Jobs[name]; !exists {
+		return
+	}
+
+	delete(db.Jobs, name)
+	db.Metadata.UpdatedAt = time.Now().Unix()
+}
+
 func (db *Database) SetJob(j *Job, k string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
 	db.Jobs[k] = j
-	db.Metadata.UpdatedAt = j.Metadata.UpdatedAt
+	db.Metadata.UpdatedAt = time.Now().Unix()
 }
 
 func ActualizeDatabase(

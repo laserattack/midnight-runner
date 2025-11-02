@@ -60,7 +60,8 @@
                         value="10" pattern="[0-9]*">
                     </div>
                     <div class="btn-container">
-                        <button type="cancel" class="btn">Delete</button>
+                        <button type="button" class="btn" id="cancelBtn"
+                            onclick="deleteJob()">Delete</button>
                         <button type="submit" class="btn">Save</button>
                         <button type="button" class="btn"
                             onclick="closeAddJobModal()">Cancel</button>
@@ -152,22 +153,39 @@
 
         document.getElementById('addJobForm')
             .addEventListener('submit', function(e) {
-            e.preventDefault();
+                e.preventDefault();
 
-            const formData = new FormData(this);
+                const formData = new FormData(this);
+                const jobData = {
+                    name: formData.get('name'),
+                    description: formData.get('description'),
+                    command: formData.get('command'),
+                    cron: formData.get('cron'),
+                    timeout: parseInt(formData.get('timeout')),
+                    maxRetries: parseInt(formData.get('maxRetries')),
+                    retryInterval: parseInt(formData.get('retryInterval'))
+                };
+
+                sendJSON(jobData, "/api/change_job")
+                closeAddJobModal();
+            });
+
+        //  TODO: addJob -> setJob сделать везде
+        function deleteJob() {
+            const formData = new FormData(document.getElementById('addJobForm'));
             const jobData = {
-                name: formData.get('name'),
-                description: formData.get('description'),
-                command: formData.get('command'),
-                cron: formData.get('cron'),
-                timeout: parseInt(formData.get('timeout')),
-                maxRetries: parseInt(formData.get('maxRetries')),
-                retryInterval: parseInt(formData.get('retryInterval'))
+                name: formData.get('name')
             };
 
-            sendJSON(jobData, "/api/change_job")
-            closeAddJobModal();
-        });
+            sendJSON(jobData, "/api/delete_job")
+                .then(() => {
+                    closeAddJobModal();
+                })
+                .catch(err => {
+                    console.error("Failed to delete job:", err);
+                    alert("Failed to delete job");
+                });
+        }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {

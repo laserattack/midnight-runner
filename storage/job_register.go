@@ -51,6 +51,7 @@ func registerShellJob(
 	timeout := j.Config.Timeout
 
 	logFields := []any{
+		"name", jobKey,
 		"description", description,
 		"command", command,
 		"cron_expression", cronExpression,
