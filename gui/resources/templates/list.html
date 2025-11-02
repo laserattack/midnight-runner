@@ -19,14 +19,14 @@
                 <button class="btn"
                     onclick="openAddJobModal()"
                     style="margin: 0 15px; vertical-align: middle;">
-                    Add/edit job</button>
+                    Set job</button>
                 <span id="lastUpdate" class="last-update"></span>
             </h1>
         </div>
 
         <div id="addJobModal" class="modal">
             <div class="modal-content">
-                <h2>Add/edit job</h2>
+                <h2>Set job</h2>
                 <form id="addJobForm">
                     <div class="form-group">
                         <label>Name:</label>
@@ -60,6 +60,7 @@
                         value="10" pattern="[0-9]*">
                     </div>
                     <div class="btn-container">
+                        <button type="cancel" class="btn">Delete</button>
                         <button type="submit" class="btn">Save</button>
                         <button type="button" class="btn"
                             onclick="closeAddJobModal()">Cancel</button>
