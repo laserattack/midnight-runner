@@ -86,7 +86,11 @@ func (db *Database) ExecJob(
 		afterExec,
 	)
 
-	go job.Execute(ctx)
+	go func() {
+		if err := job.Execute(ctx); err != nil {
+			logger.Warn("Error execute command", "error", err)
+		}
+	}()
 }
 
 func (db *Database) DeleteJob(name string) {
