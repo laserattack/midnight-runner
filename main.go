@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -21,7 +22,7 @@ import (
 )
 
 type flagOpts struct {
-	DatabasePath                  string `short:"d" long:"database" description:"Database file path" required:"true"`
+	DatabasePath                  string `short:"d" long:"database" description:"Database file path"`
 	DatabaseReloadInterval        uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" default:"10"`
 	DatabaseUpdateAttemptMaxCount uint32 `short:"m" long:"max-update-attempts" description:"Max consecutive database reload attempts before shutdown" default:"10"`
 	WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
@@ -35,6 +36,8 @@ type flagOpts struct {
 
 //  TODO: Сделать кнопку Exec, которая должна запускать
 // немедленной выполнение джобы
+
+//  TODO: Подумать над Version
 
 func main() {
 	//  NOTE: Setup logger
@@ -56,6 +59,28 @@ func main() {
 	}
 
 	dbPath := fo.DatabasePath
+	if dbPath == "" {
+		dbDir, err := os.UserConfigDir()
+		if err != nil {
+			logger.Error("the -d / --database flag is not specified" +
+				" and the default config directory could not be determined")
+		}
+
+		dbPath = filepath.Join(dbDir, "midnight-runner-database.json")
+
+		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+			db := &storage.Database{
+				Version: "1.1",
+				Metadata: storage.Metadata{
+					UpdatedAt: time.Now().Unix(),
+				},
+				Jobs: storage.Jobs{},
+			}
+
+			storage.SaveToFile(db, dbPath)
+		}
+	}
+
 	dbReloadInterval := fo.DatabaseReloadInterval
 	dbUpdateAttemptMaxCount := fo.DatabaseUpdateAttemptMaxCount
 	webServerPort := fmt.Sprint(fo.WebServerPort)
@@ -88,11 +113,6 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	//  NOTE: Load database
-
-	//  TODO: Сделать какую нибудь базу данных по умолчанию,
-	// чтобы можно было запускать без аргумента
-
-	//  TODO: Изначально статусом работы не может быть active
 
 	logger.Info("Loading database", "file", dbPath)
 	db, err := storage.LoadFromFile(dbPath)

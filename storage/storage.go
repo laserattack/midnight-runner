@@ -153,6 +153,12 @@ func SaveToFile(db *Database, filepath string) error {
 	databaseFileMutex.Lock()
 	defer databaseFileMutex.Unlock()
 
+	for jk := range db.Jobs {
+		if db.Jobs[jk].Config.Status == StatusActive {
+			db.Jobs[jk].Config.Status = StatusEnable
+		}
+	}
+
 	data, err := db.Serialize()
 	if err != nil {
 		return err
