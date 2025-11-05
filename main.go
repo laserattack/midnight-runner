@@ -62,8 +62,9 @@ func main() {
 	if dbPath == "" {
 		dbDir, err := os.UserConfigDir()
 		if err != nil {
-			logger.Error("the -d / --database flag is not specified" +
+			logger.Error("The -d / --database flag is not specified" +
 				" and the default config directory could not be determined")
+			return
 		}
 
 		dbPath = filepath.Join(dbDir, "midnight-runner-database.json")
@@ -77,7 +78,10 @@ func main() {
 				Jobs: storage.Jobs{},
 			}
 
-			storage.SaveToFile(db, dbPath)
+			if err = storage.SaveToFile(db, dbPath); err != nil {
+				logger.Error("Failed to save database", "error", err)
+				return
+			}
 		}
 	}
 
