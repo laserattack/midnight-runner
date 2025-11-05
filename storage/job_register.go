@@ -35,11 +35,9 @@ func RegisterJobs(
 }
 
 func registerShellJob(
-	// quartz.Scheduler = &StdScheduler, 8 bytes
 	scheduler quartz.Scheduler,
 	db *Database,
 	jobKey string,
-	// instead of a heavy structure pass a pointer
 	j *Job,
 	logger *slog.Logger,
 ) error {
@@ -57,33 +55,8 @@ func registerShellJob(
 		"cron_expression", cronExpression,
 	}
 
-	afterExec := func(ctx context.Context, qj *job.ShellJob) {
-		db.mu.Lock()
-		j.Config.Status = StatusEnable
-		db.mu.Unlock()
-
-		status := qj.JobStatus()
-
-		switch status {
-		case job.StatusOK:
-			logger.Info("Command completed successfully", logFields...)
-		case job.StatusFailure:
-			select {
-			case <-ctx.Done():
-				logger.Warn("Command timeout exceeded", logFields...)
-			default:
-				logger.Warn("Command failed", logFields...)
-			}
-		}
-	}
-
-	beforeExec := func(ctx context.Context, qj *job.ShellJob) {
-		db.mu.Lock()
-		j.Config.Status = StatusActive
-		db.mu.Unlock()
-
-		logger.Info("Start command execution", logFields...)
-	}
+	beforeExec := createBeforeExecCallback(db, j, logger, logFields)
+	afterExec := createAfterExecCallback(db, j, logger, logFields)
 
 	quartzJob := extjob.NewShellJobWithCallbacks(
 		command,
@@ -116,4 +89,46 @@ func registerShellJob(
 	}
 
 	return nil
+}
+
+func createBeforeExecCallback(
+	db *Database,
+	j *Job,
+	logger *slog.Logger,
+	logFields []any,
+) func(context.Context, *job.ShellJob) {
+	return func(ctx context.Context, qj *job.ShellJob) {
+		db.mu.Lock()
+		j.Config.Status = StatusActive
+		db.mu.Unlock()
+
+		logger.Info("Start command execution", logFields...)
+	}
+}
+
+func createAfterExecCallback(
+	db *Database,
+	j *Job,
+	logger *slog.Logger,
+	logFields []any,
+) func(context.Context, *job.ShellJob) {
+	return func(ctx context.Context, qj *job.ShellJob) {
+		db.mu.Lock()
+		j.Config.Status = StatusEnable
+		db.mu.Unlock()
+
+		status := qj.JobStatus()
+
+		switch status {
+		case job.StatusOK:
+			logger.Info("Command completed successfully", logFields...)
+		case job.StatusFailure:
+			select {
+			case <-ctx.Done():
+				logger.Warn("Command timeout exceeded", logFields...)
+			default:
+				logger.Warn("Command failed", logFields...)
+			}
+		}
+	}
 }

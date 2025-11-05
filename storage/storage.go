@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reugn/go-quartz/quartz"
+	"midnight-runner/extjob"
 )
 
 // A Mutex for safe operation with a database stored on disk
@@ -53,28 +53,40 @@ func (db *Database) ToggleJob(name string) {
 
 func (db *Database) ExecJob(
 	name string,
-	scheduler quartz.Scheduler,
 	ctx context.Context,
-) error {
+	logger *slog.Logger,
+) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	if _, exists := db.Jobs[name]; !exists {
-		return nil
+		return
 	}
 
-	if db.Jobs[name].Config.Status == StatusDisable {
-		return nil
+	j := db.Jobs[name]
+
+	if j.Config.Status == StatusDisable {
+		return
 	}
 
-	jobKey := quartz.NewJobKey(name)
-	job, err := scheduler.GetScheduledJob(jobKey)
-	if err != nil {
-		return err
+	logFields := []any{
+		"name", name,
+		"description", j.Description,
+		"command", j.Config.Command,
+		"cron_expression", j.Config.CronExpression,
 	}
 
-	go job.JobDetail().Job().Execute(ctx)
-	return err
+	beforeExec := createBeforeExecCallback(db, j, logger, logFields)
+	afterExec := createAfterExecCallback(db, j, logger, logFields)
+
+	job := extjob.NewShellJobWithCallbacks(
+		j.Config.Command,
+		time.Duration(j.Config.Timeout)*time.Second,
+		beforeExec,
+		afterExec,
+	)
+
+	go job.Execute(ctx)
 }
 
 func (db *Database) DeleteJob(name string) {

@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"midnight-runner/storage"
-
-	"github.com/reugn/go-quartz/quartz"
 )
 
 func rootHandler() http.HandlerFunc {
@@ -23,7 +21,6 @@ func rootHandler() http.HandlerFunc {
 func execJob(
 	logger *slog.Logger,
 	db *storage.Database,
-	scheduler quartz.Scheduler,
 	ctx context.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -44,11 +41,7 @@ func execJob(
 			}
 		}()
 
-		if err = db.ExecJob(jobData.Name, scheduler, ctx); err != nil {
-			logger.Error("Error exec job", "error", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+		db.ExecJob(jobData.Name, ctx, logger)
 	}
 }
 

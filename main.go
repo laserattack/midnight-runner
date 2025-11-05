@@ -28,7 +28,7 @@ type flagOpts struct {
 	WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
 	WebServerShutdownTimeout      uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
 	MemStatsInterval              uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
-	ServerLog                     bool   `long:"server-log" description:"Log messages from HTTP server"`
+	HTTPLog                       bool   `long:"http-log" description:"Log messages about HTTP connections"`
 }
 
 //  TODO: Сделать флаг -o / --once который если прилетает
@@ -85,7 +85,7 @@ func main() {
 	webServerPort := fmt.Sprint(fo.WebServerPort)
 	webServerShutdownTimeout := fo.WebServerShutdownTimeout
 	memStatsInterval := fo.MemStatsInterval
-	serverLog := fo.ServerLog
+	HTTPLog := fo.HTTPLog
 
 	if dbReloadInterval == 0 {
 		logger.Error("Database reload interval must be positive")
@@ -103,7 +103,7 @@ func main() {
 		"port", webServerPort,
 		"server-shutdown-timeout", webServerShutdownTimeout,
 		"mem-stats-interval", memStatsInterval,
-		"server-log", serverLog,
+		"http-log", HTTPLog,
 	)
 
 	//  NOTE: Setup signal's handler
@@ -253,12 +253,12 @@ func main() {
 
 	//  NOTE: Start Web Server
 
-	serverLogger := utils.MaybeLogger(logger, serverLog)
+	httpLogger := utils.MaybeLogger(logger, HTTPLog)
 	server := gui.CreateWebServer(
 		webServerPort,
-		serverLogger,
+		httpLogger,
+		logger,
 		db,
-		scheduler,
 		ctx,
 	)
 	go func() {

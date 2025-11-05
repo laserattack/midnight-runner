@@ -9,8 +9,6 @@ import (
 	"net/http"
 
 	"midnight-runner/storage"
-
-	"github.com/reugn/go-quartz/quartz"
 )
 
 //go:embed resources/*
@@ -26,15 +24,15 @@ var (
 
 func CreateWebServer(
 	port string,
+	httpLogger *slog.Logger,
 	logger *slog.Logger,
 	db *storage.Database,
-	scheduler quartz.Scheduler,
 	ctx context.Context,
 ) *http.Server {
 	mux := http.NewServeMux()
 
 	m := createMiddlewaresChain(
-		logReqMiddleware(logger),
+		logReqMiddleware(httpLogger),
 	)
 
 	//  NOTE: Register routes
@@ -56,7 +54,7 @@ func CreateWebServer(
 		mux.Handle("/api/change_job", m(changeJob(logger, db)))
 		mux.Handle("/api/delete_job", m(deleteJob(logger, db)))
 		mux.Handle("/api/toggle_job", m(toggleJob(logger, db)))
-		mux.Handle("/api/exec_job", m(execJob(logger, db, scheduler, ctx)))
+		mux.Handle("/api/exec_job", m(execJob(logger, db, ctx)))
 	}
 
 	return &http.Server{
