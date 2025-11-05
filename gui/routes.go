@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -9,11 +10,45 @@ import (
 	"time"
 
 	"midnight-runner/storage"
+
+	"github.com/reugn/go-quartz/quartz"
 )
 
 func rootHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/list", http.StatusFound)
+	}
+}
+
+func execJob(
+	logger *slog.Logger,
+	db *storage.Database,
+	scheduler quartz.Scheduler,
+	ctx context.Context,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var jobData struct {
+			Name string `json:"name"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&jobData)
+		if err != nil {
+			logger.Error("Error decode execJob json data", "error", err)
+			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		defer func() {
+			if err = r.Body.Close(); err != nil {
+				logger.Error("Failed to close request body", "error", err)
+			}
+		}()
+
+		if err = db.ExecJob(jobData.Name, scheduler, ctx); err != nil {
+			logger.Error("Error exec job", "error", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 }
 
@@ -74,7 +109,6 @@ func changeJob(
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//  TODO: Тут CronExpression должно быть
 		var jobData struct {
 			Name          string `json:"name"`
 			Description   string `json:"description"`

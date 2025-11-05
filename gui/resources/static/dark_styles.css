@@ -210,6 +210,14 @@ body {
         }
     }
 
+    &#execBtn {
+        background: #10b981;
+        color: white;
+        &:hover {
+            background: #059669;
+        }
+    }
+
     &#toggleBtn {
         background: #0ea5e9;
         color: white;

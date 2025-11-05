@@ -61,12 +61,14 @@
                     </div>
                     <div class="btn-container">
                         <button type="button" class="btn" id="toggleBtn"
-                            onclick="toggleJob()">Toggle</button>
+                            onclick="toggleJob()">T</button>
                         <button type="button" class="btn" id="cancelBtn"
-                            onclick="deleteJob()">Delete</button>
-                        <button type="submit" class="btn">Save</button>
+                            onclick="deleteJob()">D</button>
+                        <button type="submit" class="btn">S</button>
+                        <button type="button" class="btn" id="execBtn"
+                            onclick="execJob()">E</button>
                         <button type="button" class="btn"
-                            onclick="closeSetJobModal()">Cancel</button>
+                            onclick="closeSetJobModal()">C</button>
                     </div>
                 </form>
             </div>
@@ -171,6 +173,22 @@
                 sendJSON(jobData, "/api/change_job")
                 closeSetJobModal();
             });
+
+        function execJob() {
+            const formData = new FormData(document.getElementById('setJobForm'));
+            const jobData = {
+                name: formData.get('name')
+            };
+
+            sendJSON(jobData, "/api/exec_job")
+                .then(() => {
+                    closeSetJobModal();
+                })
+                .catch(err => {
+                    console.error("Failed to exec job:", err);
+                    alert("Failed to exec job");
+                });
+        }
 
         function deleteJob() {
             const formData = new FormData(document.getElementById('setJobForm'));

@@ -2,12 +2,15 @@
 package gui
 
 import (
+	"context"
 	"embed"
 	"io/fs"
 	"log/slog"
 	"net/http"
 
 	"midnight-runner/storage"
+
+	"github.com/reugn/go-quartz/quartz"
 )
 
 //go:embed resources/*
@@ -25,6 +28,8 @@ func CreateWebServer(
 	port string,
 	logger *slog.Logger,
 	db *storage.Database,
+	scheduler quartz.Scheduler,
+	ctx context.Context,
 ) *http.Server {
 	mux := http.NewServeMux()
 
@@ -51,6 +56,7 @@ func CreateWebServer(
 		mux.Handle("/api/change_job", m(changeJob(logger, db)))
 		mux.Handle("/api/delete_job", m(deleteJob(logger, db)))
 		mux.Handle("/api/toggle_job", m(toggleJob(logger, db)))
+		mux.Handle("/api/exec_job", m(execJob(logger, db, scheduler, ctx)))
 	}
 
 	return &http.Server{

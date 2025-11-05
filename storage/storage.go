@@ -3,11 +3,14 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log/slog"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/reugn/go-quartz/quartz"
 )
 
 // A Mutex for safe operation with a database stored on disk
@@ -46,6 +49,32 @@ func (db *Database) ToggleJob(name string) {
 	}
 
 	db.Metadata.UpdatedAt = time.Now().Unix()
+}
+
+func (db *Database) ExecJob(
+	name string,
+	scheduler quartz.Scheduler,
+	ctx context.Context,
+) error {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	if _, exists := db.Jobs[name]; !exists {
+		return nil
+	}
+
+	if db.Jobs[name].Config.Status == StatusDisable {
+		return nil
+	}
+
+	jobKey := quartz.NewJobKey(name)
+	job, err := scheduler.GetScheduledJob(jobKey)
+	if err != nil {
+		return err
+	}
+
+	go job.JobDetail().Job().Execute(ctx)
+	return err
 }
 
 func (db *Database) DeleteJob(name string) {

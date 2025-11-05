@@ -34,11 +34,6 @@ type flagOpts struct {
 //  TODO: Сделать флаг -o / --once который если прилетает
 // то программа выполняет сразу все джобы из базы 1 раз и завершается
 
-//  TODO: Сделать кнопку Exec, которая должна запускать
-// немедленной выполнение джобы
-
-//  TODO: Подумать над Version
-
 func main() {
 	//  NOTE: Setup logger
 
@@ -259,7 +254,13 @@ func main() {
 	//  NOTE: Start Web Server
 
 	serverLogger := utils.MaybeLogger(logger, serverLog)
-	server := gui.CreateWebServer(webServerPort, serverLogger, db)
+	server := gui.CreateWebServer(
+		webServerPort,
+		serverLogger,
+		db,
+		scheduler,
+		ctx,
+	)
 	go func() {
 		logger.Info("Starting web server", "port", webServerPort)
 		err := server.ListenAndServe()
