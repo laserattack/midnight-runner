@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -178,8 +177,6 @@ func main() {
 			return
 		}
 
-		logger.Info("Database actualizing...")
-
 		dbDonor, err := storage.LoadFromFile(dbPath)
 		if err != nil {
 			logger.Warn("Database load failed",
@@ -209,7 +206,6 @@ func main() {
 		// тогда выходим в случае если попытка нулевая
 		// (не было ошибок)
 		if !needRestartScheduler && dbUpdateAttemptCounter.Load() == 0 {
-			logger.Info("Database is up-to-date. No need to restart scheduler")
 			return
 		}
 
@@ -233,16 +229,12 @@ func main() {
 		}
 
 		dbUpdateAttemptCounter.Store(0)
-		logger.Info("Database successfully actualized")
 	}, time.Second*time.Duration(dbReloadInterval))
 	defer close(dbUpdateTickerStopChan)
 
 	//  NOTE: Start Web Server
 
-	serverLogger := logger
-	if !serverLog {
-		serverLogger = slog.New(slog.NewTextHandler(io.Discard, nil))
-	}
+	serverLogger := utils.MaybeLogger(logger, serverLog)
 	server := gui.CreateWebServer(webServerPort, serverLogger, db)
 	go func() {
 		logger.Info("Starting web server", "port", webServerPort)

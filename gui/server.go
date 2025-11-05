@@ -43,10 +43,15 @@ func CreateWebServer(
 	)
 	mux.Handle("/", m(rootHandler()))
 	mux.Handle("/list", m(listHandler(logger)))
-	mux.Handle("/api/get_database", m(sendDatabase(logger, db)))
-	mux.Handle("/api/change_job", m(changeJob(logger, db)))
-	mux.Handle("/api/delete_job", m(deleteJob(logger, db)))
-	mux.Handle("/api/toggle_job", m(toggleJob(logger, db)))
+
+	//  NOTE: Api routes
+
+	{
+		mux.Handle("/api/get_database", m(sendDatabase(logger, db)))
+		mux.Handle("/api/change_job", m(changeJob(logger, db)))
+		mux.Handle("/api/delete_job", m(deleteJob(logger, db)))
+		mux.Handle("/api/toggle_job", m(toggleJob(logger, db)))
+	}
 
 	return &http.Server{
 		Addr:    ":" + port,

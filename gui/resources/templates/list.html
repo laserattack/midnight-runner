@@ -17,7 +17,7 @@
                     заполены ее данными актуальными
                 -->
                 <button class="btn"
-                    onclick="openAddJobModal()"
+                    onclick="openSetJobModal()"
                     style="margin: 0 15px; vertical-align: middle;">
                     Set job</button>
                 <span id="lastUpdate" class="last-update"></span>
@@ -66,7 +66,7 @@
                             onclick="deleteJob()">Delete</button>
                         <button type="submit" class="btn">Save</button>
                         <button type="button" class="btn"
-                            onclick="closeAddJobModal()">Cancel</button>
+                            onclick="closeSetJobModal()">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -144,11 +144,11 @@
         }
 
         // Функции для работы с модальным окном
-        function openAddJobModal() {
+        function openSetJobModal() {
             document.getElementById('setJobModal').style.display = 'block';
         }
 
-        function closeAddJobModal() {
+        function closeSetJobModal() {
             document.getElementById('setJobModal').style.display = 'none';
             document.getElementById('setJobForm').reset();
         }
@@ -169,7 +169,7 @@
                 };
 
                 sendJSON(jobData, "/api/change_job")
-                closeAddJobModal();
+                closeSetJobModal();
             });
 
         function deleteJob() {
@@ -180,7 +180,7 @@
 
             sendJSON(jobData, "/api/delete_job")
                 .then(() => {
-                    closeAddJobModal();
+                    closeSetJobModal();
                 })
                 .catch(err => {
                     console.error("Failed to delete job:", err);
@@ -196,7 +196,7 @@
 
             sendJSON(jobData, "/api/toggle_job")
                 .then(() => {
-                    closeAddJobModal();
+                    closeSetJobModal();
                 })
                 .catch(err => {
                     console.error("Failed to toggle job:", err);
@@ -206,7 +206,7 @@
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                closeAddJobModal();
+                closeSetJobModal();
             }
         });
 
