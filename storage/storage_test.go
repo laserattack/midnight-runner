@@ -57,7 +57,7 @@ func TestStorageJSONRountTrip(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.database.Serialize()
+			data, err := tt.database.SerializeWithLock()
 			if err != nil {
 				t.Fatalf("Serialize failed: %v", err)
 			}

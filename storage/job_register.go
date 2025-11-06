@@ -11,15 +11,14 @@ import (
 	"github.com/reugn/go-quartz/quartz"
 )
 
+//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE MUTEX ON DB
+
 func RegisterJobs(
 	// quartz.Scheduler = &StdScheduler, 8 bytes
 	scheduler quartz.Scheduler,
 	db *Database,
 	logger *slog.Logger,
 ) error {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell && j.Config.Status != StatusDisable {
@@ -101,14 +100,14 @@ func createBeforeExecCallback(
 	logFields []any,
 ) func(context.Context, *job.ShellJob) {
 	return func(ctx context.Context, qj *job.ShellJob) {
-		db.mu.Lock()
+		db.Mu.Lock()
 		switch j.Config.Status {
 		case StatusEnable:
 			j.Config.Status = StatusActiveDuringEnable
 		case StatusDisable:
 			j.Config.Status = StatusActiveDuringDisable
 		}
-		db.mu.Unlock()
+		db.Mu.Unlock()
 
 		logger.Info("Start command execution", logFields...)
 	}
@@ -121,14 +120,14 @@ func createAfterExecCallback(
 	logFields []any,
 ) func(context.Context, *job.ShellJob) {
 	return func(ctx context.Context, qj *job.ShellJob) {
-		db.mu.Lock()
+		db.Mu.Lock()
 		switch j.Config.Status {
 		case StatusActiveDuringDisable:
 			j.Config.Status = StatusDisable
 		case StatusActiveDuringEnable:
 			j.Config.Status = StatusEnable
 		}
-		db.mu.Unlock()
+		db.Mu.Unlock()
 
 		status := qj.JobStatus()
 

@@ -22,13 +22,13 @@ import (
 )
 
 type flagOpts struct {
-	DatabasePath                  string `short:"d" long:"database" description:"Database file path"`
-	DatabaseReloadInterval        uint   `short:"r" long:"database-reload-interval" description:"Reload database interval in seconds" default:"10"`
-	DatabaseUpdateAttemptMaxCount uint32 `short:"m" long:"max-update-attempts" description:"Max consecutive database reload attempts before shutdown" default:"10"`
-	WebServerPort                 uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
-	WebServerShutdownTimeout      uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
-	MemStatsInterval              uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
-	HTTPLog                       bool   `long:"http-log" description:"Log messages about HTTP connections"`
+	DatabasePath                string `short:"d" long:"database" description:"Database file path"`
+	WebServerPort               uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
+	DatabaseSyncInterval        uint   `long:"sync-interval" description:"Database sync interval in seconds" default:"1"`
+	DatabaseSyncAttemptMaxCount uint32 `long:"max-sync-attempts" description:"Max consecutive database sync attempts before shutdown" default:"10"`
+	WebServerShutdownTimeout    uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
+	MemStatsInterval            uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
+	HTTPLog                     bool   `long:"http-log" description:"Log messages about HTTP connections"`
 }
 
 func main() {
@@ -63,33 +63,34 @@ func main() {
 
 		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 			db := storage.New()
-			if err = storage.SaveToFile(db, dbPath); err != nil {
+			if err = db.SaveToFile(dbPath); err != nil {
 				logger.Error("Failed to save database", "error", err)
 				return
 			}
 		}
 	}
 
-	dbReloadInterval := fo.DatabaseReloadInterval
-	dbUpdateAttemptMaxCount := fo.DatabaseUpdateAttemptMaxCount
+	dbSyncInterval := fo.DatabaseSyncInterval
+	dbSyncAttemptMaxCount := fo.DatabaseSyncAttemptMaxCount
 	webServerPort := fmt.Sprint(fo.WebServerPort)
 	webServerShutdownTimeout := fo.WebServerShutdownTimeout
 	memStatsInterval := fo.MemStatsInterval
 	HTTPLog := fo.HTTPLog
 
-	if dbReloadInterval == 0 {
+	if dbSyncInterval == 0 {
 		logger.Error("Database reload interval must be positive")
 		return
 	}
-	if dbUpdateAttemptMaxCount == 0 {
+
+	if dbSyncAttemptMaxCount == 0 {
 		logger.Error("Maximum database update attempts must be positive")
 		return
 	}
 
 	logger.Info("Program started with configuration",
 		"database", dbPath,
-		"database-reload-interval", dbReloadInterval,
-		"max-update-attempts", dbUpdateAttemptMaxCount,
+		"sync-interval", dbSyncInterval,
+		"max-sync-attempts", dbSyncAttemptMaxCount,
 		"port", webServerPort,
 		"server-shutdown-timeout", webServerShutdownTimeout,
 		"mem-stats-interval", memStatsInterval,
@@ -161,14 +162,13 @@ func main() {
 		defer close(memMonitorStopChan)
 	}
 
-	//  NOTE: Updating the database in RAM
+	//  NOTE: Save db to file
 
-	// Without atomic, a situation is possible where
-	// 2 goroutines increment a variable at the same time and
-	// it increases by 1 instead of 2
+	var dbSyncFailureCount atomic.Uint32
+	var prevUpdatedAt atomic.Int64
+	prevUpdatedAt.Store(db.Metadata.UpdatedAt)
 
-	var dbUpdateAttemptCounter atomic.Uint32
-	dbUpdateTickerStopChan := utils.Ticker(func() {
+	dbSyncTickerStopChan := utils.Ticker(func() {
 		// Protection against startup after the start of app shutdown
 		select {
 		case <-ctx.Done():
@@ -178,7 +178,7 @@ func main() {
 
 		// Exit if database reload has failed many
 		// times in a row - likely a persistent issue
-		if dbUpdateAttemptCounter.Load() >= dbUpdateAttemptMaxCount {
+		if dbSyncFailureCount.Load() >= dbSyncAttemptMaxCount {
 			logger.Error(
 				"Persistent database reload failures - shutting down",
 			)
@@ -186,60 +186,36 @@ func main() {
 			return
 		}
 
-		dbDonor, err := storage.LoadFromFile(dbPath)
-		if err != nil {
-			logger.Warn("Database load failed",
-				"file", dbPath,
-				"error", err,
-			)
-			dbUpdateAttemptCounter.Add(1)
+		db.Mu.RLock()
+		defer db.Mu.RUnlock()
+
+		if db.Metadata.UpdatedAt <= prevUpdatedAt.Load() {
 			return
 		}
 
-		needRestartScheduler, err := storage.ActualizeDatabase(
-			db,
-			dbDonor,
-			logger,
-		)
-		// Не актуализировалась
-		if err != nil {
-			logger.Warn("Actualize database error", "error", err)
-			dbUpdateAttemptCounter.Add(1)
+		if err := db.SaveToFile(dbPath); err != nil {
+			logger.Warn("Save database to file failed", "error", err)
+			dbSyncFailureCount.Add(1)
 			return
 		}
-
-		// Актуализировалась
-		// (на этом моменте базы в файле и в RAM идентичны)
-
-		// При актуализации НЕ обновилась в RAM?
-		// тогда выходим в случае если попытка нулевая
-		// (не было ошибок)
-		if !needRestartScheduler && dbUpdateAttemptCounter.Load() == 0 {
-			return
-		}
-
-		// Обновилась в RAM => надо шедулер перезапустить
 
 		if err = scheduler.Clear(); err != nil {
-			logger.Warn("Scheduler clear failed",
-				"error", err,
-			)
-			dbUpdateAttemptCounter.Add(1)
+			logger.Warn("Scheduler clear failed", "error", err)
+			dbSyncFailureCount.Add(1)
 			return
 		}
 
 		err = storage.RegisterJobs(scheduler, db, logger)
 		if err != nil {
-			logger.Warn("Jobs register failed",
-				"error", err,
-			)
-			dbUpdateAttemptCounter.Add(1)
+			logger.Warn("Jobs register failed", "error", err)
+			dbSyncFailureCount.Add(1)
 			return
 		}
 
-		dbUpdateAttemptCounter.Store(0)
-	}, time.Second*time.Duration(dbReloadInterval))
-	defer close(dbUpdateTickerStopChan)
+		prevUpdatedAt.Store(db.Metadata.UpdatedAt)
+		dbSyncFailureCount.Store(0)
+	}, time.Second*time.Duration(dbSyncInterval))
+	defer close(dbSyncTickerStopChan)
 
 	//  NOTE: Start Web Server
 
@@ -261,24 +237,34 @@ func main() {
 
 	//  NOTE: Shutdown
 
-	select {
-	case <-sigChan:
-		logger.Info("Received shutdown signal")
-	case <-ctx.Done():
-		logger.Info("Shutdown triggered by internal error")
+	{
+		select {
+		case <-sigChan:
+			logger.Info("Received shutdown signal")
+		case <-ctx.Done():
+			logger.Info("Shutdown triggered by internal error")
+		}
 	}
 
-	//  NOTE: Shutdown Web Server
+	{
+		serverCtx, serverCancel := context.WithTimeout(
+			context.Background(),
+			time.Duration(webServerShutdownTimeout)*time.Second,
+		)
+		defer serverCancel()
 
-	serverCtx, serverCancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(webServerShutdownTimeout)*time.Second,
-	)
-	defer serverCancel()
+		if err := server.Shutdown(serverCtx); err != nil {
+			logger.Error("Web server shutdown error", "error", err)
+		} else {
+			logger.Info("Web server stopped")
+		}
+	}
 
-	if err := server.Shutdown(serverCtx); err != nil {
-		logger.Error("Web server shutdown error", "error", err)
-	} else {
-		logger.Info("Web server stopped")
+	{
+		if err := db.SaveToFile(dbPath); err != nil {
+			logger.Error("Save db to file failed", "error", err)
+		} else {
+			logger.Info("Database saved")
+		}
 	}
 }

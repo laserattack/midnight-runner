@@ -143,7 +143,7 @@ func sendDatabase(
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		jsonData, err := db.Serialize()
+		jsonData, err := db.SerializeWithLock()
 		if err != nil {
 			logger.Error("Failed to serialize database", "error", err)
 			http.Error(

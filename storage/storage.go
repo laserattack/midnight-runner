@@ -23,7 +23,7 @@ type Metadata struct {
 }
 
 type Database struct {
-	mu       sync.RWMutex
+	Mu       sync.RWMutex
 	filepath string
 	Version  string   `json:"version"`
 	Metadata Metadata `json:"metadata"`
@@ -41,8 +41,8 @@ func New() *Database {
 }
 
 func (db *Database) ToggleJob(name string) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Mu.Lock()
+	defer db.Mu.Unlock()
 
 	var j *Job
 	var exists bool
@@ -66,8 +66,8 @@ func (db *Database) ExecJob(
 	ctx context.Context,
 	logger *slog.Logger,
 ) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.Mu.RLock()
+	defer db.Mu.RUnlock()
 
 	if _, exists := db.Jobs[name]; !exists {
 		return
@@ -100,8 +100,8 @@ func (db *Database) ExecJob(
 }
 
 func (db *Database) DeleteJob(name string) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Mu.Lock()
+	defer db.Mu.Unlock()
 
 	if _, exists := db.Jobs[name]; !exists {
 		return
@@ -112,53 +112,23 @@ func (db *Database) DeleteJob(name string) {
 }
 
 func (db *Database) SetJob(j *Job, k string) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Mu.Lock()
+	defer db.Mu.Unlock()
 
 	db.Jobs[k] = j
 	db.Metadata.UpdatedAt = time.Now().Unix()
 }
 
-func ActualizeDatabase(
-	db,
-	dbDonor *Database,
-	logger *slog.Logger,
-) (needRestartScheduler bool, err error) {
-	db.mu.Lock()
-
-	dbDonor.mu.RLock()
-	defer dbDonor.mu.RUnlock()
-
-	// No change
-	if db.Metadata.UpdatedAt == dbDonor.Metadata.UpdatedAt {
-		db.mu.Unlock()
-		return false, nil
-	}
-
-	// Actualize in ram
-	if db.Metadata.UpdatedAt < dbDonor.Metadata.UpdatedAt {
-		db.Version = dbDonor.Version
-		db.Metadata = dbDonor.Metadata
-		db.Jobs = dbDonor.Jobs
-		db.mu.Unlock()
-		return true, nil
-	}
-
-	// Actualize in file
-	db.mu.Unlock()
-	if err := SaveToFile(db, db.filepath); err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 //  NOTE: Serialize storage structure in byte array
 
-func (db *Database) Serialize() ([]byte, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+func (db *Database) SerializeWithLock() ([]byte, error) {
+	db.Mu.RLock()
+	defer db.Mu.RUnlock()
 
+	return json.MarshalIndent(db, "", "    ")
+}
+
+func (db *Database) Serialize() ([]byte, error) {
 	return json.MarshalIndent(db, "", "    ")
 }
 
@@ -200,7 +170,9 @@ func LoadFromFile(filepath string) (*Database, error) {
 
 //  NOTE: Save database to file
 
-func SaveToFile(db *Database, filepath string) error {
+//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE MUTEX ON DB
+
+func (db *Database) SaveToFile(filepath string) error {
 	databaseFileMutex.Lock()
 	defer databaseFileMutex.Unlock()
 
