@@ -31,6 +31,8 @@ type flagOpts struct {
 	HTTPLog                     bool   `long:"http-log" description:"Log messages about HTTP connections"`
 }
 
+//  TODO: По каждой джобе должна быть возможность посмотреть ее логи
+
 func main() {
 	//  NOTE: Setup logger
 
