@@ -40,8 +40,25 @@ function updateJobsTable(data) {
     const jobs = data.jobs || {};
     const jobsArray = Object.entries(jobs);
 
+    let enabledCount = 0;
+    let disabledCount = 0;
+
+    jobsArray.forEach(([name, job]) => {
+        if (job.config.status === '💚') {
+            enabledCount++;
+        } else if (job.config.status === '🩶') {
+            disabledCount++;
+        }
+    });
+
     document.getElementById('totalJobs')
         .textContent = jobsArray.length;
+
+    document.getElementById('enabledJobs')
+        .textContent = enabledCount;
+
+    document.getElementById('disabledJobs')
+        .textContent = disabledCount;
 
     const tableBody = document.getElementById('jobsTableBody');
     tableBody.innerHTML = '';

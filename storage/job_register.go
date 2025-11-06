@@ -24,6 +24,8 @@ func RegisterJobs(
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell && j.Config.Status != StatusDisable {
 			//  TODO: Не уверен что хороший вариант так обрывать регистрацию
+			// добавить может периодическое создание бэкапов базы работ
+			// и возможность откатиться к бэкапу
 			err := registerShellJob(scheduler, db, jk, logger)
 			if err != nil {
 				return err
