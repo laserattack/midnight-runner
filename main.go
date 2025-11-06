@@ -193,12 +193,6 @@ func main() {
 			return
 		}
 
-		if err := db.SaveToFile(dbPath); err != nil {
-			logger.Warn("Save database to file failed", "error", err)
-			dbSyncFailureCount.Add(1)
-			return
-		}
-
 		if err = scheduler.Clear(); err != nil {
 			logger.Warn("Scheduler clear failed", "error", err)
 			dbSyncFailureCount.Add(1)
@@ -208,6 +202,12 @@ func main() {
 		err = storage.RegisterJobs(scheduler, db, logger)
 		if err != nil {
 			logger.Warn("Jobs register failed", "error", err)
+			dbSyncFailureCount.Add(1)
+			return
+		}
+
+		if err := db.SaveToFile(dbPath); err != nil {
+			logger.Warn("Save database to file failed", "error", err)
 			dbSyncFailureCount.Add(1)
 			return
 		}
@@ -257,14 +257,6 @@ func main() {
 			logger.Error("Web server shutdown error", "error", err)
 		} else {
 			logger.Info("Web server stopped")
-		}
-	}
-
-	{
-		if err := db.SaveToFile(dbPath); err != nil {
-			logger.Error("Save db to file failed", "error", err)
-		} else {
-			logger.Info("Database saved")
 		}
 	}
 }
