@@ -24,7 +24,7 @@ func RegisterJobs(
 	for jk, j := range db.Jobs {
 		if j.Type == TypeShell && j.Config.Status != StatusDisable {
 			//  TODO: Не уверен что хороший вариант так обрывать регистрацию
-			err := registerShellJob(scheduler, db, jk, j, logger)
+			err := registerShellJob(scheduler, db, jk, logger)
 			if err != nil {
 				return err
 			}
@@ -38,9 +38,10 @@ func registerShellJob(
 	scheduler quartz.Scheduler,
 	db *Database,
 	jobKey string,
-	j *Job,
 	logger *slog.Logger,
 ) error {
+	j := db.Jobs[jobKey]
+
 	description := j.Description
 	command := j.Config.Command
 	maxRetries := j.Config.MaxRetries
