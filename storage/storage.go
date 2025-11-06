@@ -42,7 +42,7 @@ func (db *Database) ToggleJob(name string) {
 	}
 
 	switch j.Config.Status {
-	case StatusActive, StatusEnable:
+	case StatusActiveDuringEnable, StatusActiveDuringDisable, StatusEnable:
 		j.Config.Status = StatusDisable
 	case StatusDisable:
 		j.Config.Status = StatusEnable
@@ -64,10 +64,6 @@ func (db *Database) ExecJob(
 	}
 
 	j := db.Jobs[name]
-
-	if j.Config.Status == StatusDisable {
-		return
-	}
 
 	logFields := []any{
 		"name", name,
@@ -199,7 +195,8 @@ func SaveToFile(db *Database, filepath string) error {
 	defer databaseFileMutex.Unlock()
 
 	for jk := range db.Jobs {
-		if db.Jobs[jk].Config.Status == StatusActive {
+		if db.Jobs[jk].Config.Status == StatusActiveDuringEnable ||
+			db.Jobs[jk].Config.Status == StatusActiveDuringDisable {
 			db.Jobs[jk].Config.Status = StatusEnable
 		}
 	}

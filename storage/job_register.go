@@ -99,7 +99,12 @@ func createBeforeExecCallback(
 ) func(context.Context, *job.ShellJob) {
 	return func(ctx context.Context, qj *job.ShellJob) {
 		db.mu.Lock()
-		j.Config.Status = StatusActive
+		switch j.Config.Status {
+		case StatusEnable:
+			j.Config.Status = StatusActiveDuringEnable
+		case StatusDisable:
+			j.Config.Status = StatusActiveDuringDisable
+		}
 		db.mu.Unlock()
 
 		logger.Info("Start command execution", logFields...)
@@ -114,7 +119,12 @@ func createAfterExecCallback(
 ) func(context.Context, *job.ShellJob) {
 	return func(ctx context.Context, qj *job.ShellJob) {
 		db.mu.Lock()
-		j.Config.Status = StatusEnable
+		switch j.Config.Status {
+		case StatusActiveDuringDisable:
+			j.Config.Status = StatusDisable
+		case StatusActiveDuringEnable:
+			j.Config.Status = StatusEnable
+		}
 		db.mu.Unlock()
 
 		status := qj.JobStatus()
