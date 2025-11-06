@@ -181,6 +181,11 @@ body {
         font-size: 0.9rem;
         background: #1e293b;
         color: #f1f5f9;
+        transition: border-color 0.2s ease;
+
+        &:hover {
+            border-color: #4f46e5;
+        }
 
         &:focus {
             outline: none;
