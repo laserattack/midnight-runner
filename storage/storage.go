@@ -24,7 +24,6 @@ type Metadata struct {
 
 type Database struct {
 	Mu       sync.RWMutex
-	filepath string
 	Version  string   `json:"version"`
 	Metadata Metadata `json:"metadata"`
 	Jobs     Jobs     `json:"jobs"`
@@ -125,7 +124,7 @@ func (db *Database) SerializeWithLock() ([]byte, error) {
 	db.Mu.RLock()
 	defer db.Mu.RUnlock()
 
-	return json.MarshalIndent(db, "", "    ")
+	return db.Serialize()
 }
 
 func (db *Database) Serialize() ([]byte, error) {
@@ -164,7 +163,6 @@ func LoadFromFile(filepath string) (*Database, error) {
 		return nil, err
 	}
 
-	db.filepath = filepath
 	return db, nil
 }
 
