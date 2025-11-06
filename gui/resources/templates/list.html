@@ -19,14 +19,15 @@
                 <button class="btn"
                     onclick="openSetJobModal()"
                     style="margin: 0 15px; vertical-align: middle;">
-                    Set job</button>
+                    Control job</button>
                 <span id="lastUpdate" class="last-update"></span>
             </h1>
         </div>
 
         <div id="setJobModal" class="modal">
             <div class="modal-content">
-                <h2>Set job</h2>
+                <span class="close" onclick="closeSetJobModal()">&times;</span>
+                <h2>Control job</h2>
                 <form id="setJobForm">
                     <div class="form-group">
                         <label>Name:</label>
@@ -61,14 +62,12 @@
                     </div>
                     <div class="btn-container">
                         <button type="button" class="btn" id="toggleBtn"
-                            onclick="toggleJob()">T</button>
+                            onclick="toggleJob()">Toggle</button>
                         <button type="button" class="btn" id="cancelBtn"
-                            onclick="deleteJob()">D</button>
-                        <button type="submit" class="btn">S</button>
+                            onclick="deleteJob()">Delete</button>
+                        <button type="submit" class="btn">Save</button>
                         <button type="button" class="btn" id="execBtn"
-                            onclick="execJob()">E</button>
-                        <button type="button" class="btn"
-                            onclick="closeSetJobModal()">C</button>
+                            onclick="execJob()">Exec</button>
                     </div>
                 </form>
             </div>
