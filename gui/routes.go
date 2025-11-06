@@ -167,11 +167,6 @@ func sendDatabase(
 //  TODO: Должен быть какой то значок в статусе джобы
 // говорящий о том, выполнилась ли она последний раз или нет
 
-type ListTemplateData struct {
-	Title           string
-	RenderTimestamp int64
-}
-
 func listHandler(
 	logger *slog.Logger,
 ) http.HandlerFunc {
@@ -183,7 +178,10 @@ func listHandler(
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		templateData := ListTemplateData{
+		templateData := struct {
+			Title           string
+			RenderTimestamp int64
+		}{
 			Title:           "🌙⚙️ Midnight Runner",
 			RenderTimestamp: time.Now().Unix(),
 		}
