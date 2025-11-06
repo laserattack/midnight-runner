@@ -62,14 +62,7 @@ func main() {
 		dbPath = filepath.Join(dbDir, "midnight-runner-database.json")
 
 		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-			db := &storage.Database{
-				Version: "1.1",
-				Metadata: storage.Metadata{
-					UpdatedAt: time.Now().Unix(),
-				},
-				Jobs: storage.Jobs{},
-			}
-
+			db := storage.New()
 			if err = storage.SaveToFile(db, dbPath); err != nil {
 				logger.Error("Failed to save database", "error", err)
 				return

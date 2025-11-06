@@ -30,6 +30,16 @@ type Database struct {
 	Jobs     Jobs     `json:"jobs"`
 }
 
+func New() *Database {
+	return &Database{
+		Version: "1.1",
+		Metadata: Metadata{
+			UpdatedAt: time.Now().Unix(),
+		},
+		Jobs: Jobs{},
+	}
+}
+
 func (db *Database) ToggleJob(name string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
