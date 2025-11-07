@@ -199,6 +199,7 @@ body {
 
 .btn {
     padding: 12px 24px;
+    vertical-align: middle;
     border: none;
     border-radius: 8px;
     cursor: pointer;
