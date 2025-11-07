@@ -13,21 +13,28 @@
                 <a target="_blank"
                     href="https://github.com/laserattack/midnight-runner">
                     {{.Title}}</a>
-                <!--  TODO: Если джоба есть то поля должны быть
-                    заполены ее данными актуальными
-                -->
+                <span id="lastUpdate" class="last-update"></span>
+            </h1>
+            <h1>
                 <button class="btn"
                     onclick="openSetJobModal()"
-                    style="margin: 0 15px; vertical-align: middle;">
-                    Control job</button>
-                <span id="lastUpdate" class="last-update"></span>
+                    style="vertical-align: middle;">
+                    Add/Edit</button>
+                <button class="btn"
+                    onclick="openManageJobModal()"
+                    style="vertical-align: middle;">
+                    Delete/Exec/Toggle</button>
+                <button class="btn"
+                    onclick=""
+                    style="vertical-align: middle;">
+                    Check log</button>
             </h1>
         </div>
 
         <div id="setJobModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeSetJobModal()">&times;</span>
-                <h2>Control job</h2>
+                <h2>Add/Edit</h2>
                 <form id="setJobForm">
                     <div class="form-group">
                         <label>Name:</label>
@@ -61,13 +68,25 @@
                         value="10" pattern="[0-9]*">
                     </div>
                     <div class="btn-container">
-                        <button type="button" class="btn" id="toggleBtn"
-                            onclick="toggleJob()">Toggle</button>
-                        <button type="button" class="btn" id="cancelBtn"
-                            onclick="deleteJob()">Delete</button>
                         <button type="submit" class="btn">Save</button>
-                        <button type="button" class="btn" id="execBtn"
-                            onclick="execJob()">Exec</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="manageJobModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeManageJobModal()">&times;</span>
+                <h2>Delete/Exec/Toggle</h2>
+                <form id="manageJobForm">
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="manageJobName" name="name" required autocomplete="off">
+                    </div>
+                    <div class="btn-container">
+                        <button type="button" class="btn" id="cancelBtn" onclick="deleteJobFromModal()">Delete</button>
+                        <button type="button" class="btn" id="execBtn" onclick="execJobFromModal()">Execute</button>
+                        <button type="button" class="btn" id="toggleBtn" onclick="toggleJobFromModal()">Toggle</button>
                     </div>
                 </form>
             </div>
@@ -146,7 +165,6 @@
             }
         }
 
-        // Функции для работы с модальным окном
         function openSetJobModal() {
             document.getElementById('setJobModal').style.display = 'block';
         }
@@ -172,66 +190,93 @@
                 };
 
                 sendJSON(jobData, "/api/change_job")
-                closeSetJobModal();
+                    .then(() => {
+                        closeSetJobModal();
+                    })
+                    .catch(err => {
+                        console.error("Failed to save job:", err);
+                        alert("Failed to save job");
+                    });
             });
 
-        function execJob() {
-            const formData = new FormData(document.getElementById('setJobForm'));
-            const jobData = {
-                name: formData.get('name')
-            };
-
-            sendJSON(jobData, "/api/exec_job")
-                .then(() => {
-                    closeSetJobModal();
-                })
-                .catch(err => {
-                    console.error("Failed to exec job:", err);
-                    alert("Failed to exec job");
-                });
+        function openManageJobModal() {
+            document.getElementById('manageJobModal').style.display = 'block';
         }
 
-        function deleteJob() {
-            const formData = new FormData(document.getElementById('setJobForm'));
-            const jobData = {
-                name: formData.get('name')
-            };
-
-            sendJSON(jobData, "/api/delete_job")
-                .then(() => {
-                    closeSetJobModal();
-                })
-                .catch(err => {
-                    console.error("Failed to delete job:", err);
-                    alert("Failed to delete job");
-                });
+        function closeManageJobModal() {
+            document.getElementById('manageJobModal').style.display = 'none';
+            document.getElementById('manageJobForm').reset();
         }
 
-        function toggleJob() {
-            const formData = new FormData(document.getElementById('setJobForm'));
-            const jobData = {
-                name: formData.get('name')
-            };
+        function getJobNameFromModal() {
+            const name = document.getElementById('manageJobName').value.trim();
+            if (!name) {
+                alert("Job name is required");
+                throw new Error("Job name is empty");
+            }
+            return name;
+        }
 
-            sendJSON(jobData, "/api/toggle_job")
-                .then(() => {
-                    closeSetJobModal();
-                })
-                .catch(err => {
-                    console.error("Failed to toggle job:", err);
-                    alert("Failed to toggle job");
-                });
+        function deleteJobFromModal() {
+            try {
+                const name = getJobNameFromModal();
+                sendJSON({ name }, "/api/delete_job")
+                    .then(() => {
+                        closeManageJobModal();
+                    })
+                    .catch(err => {
+                        console.error("Failed to delete job:", err);
+                        alert("Failed to delete job");
+                    });
+            } catch (e) {
+                // alert уже показан
+            }
+        }
+
+        function execJobFromModal() {
+            try {
+                const name = getJobNameFromModal();
+                sendJSON({ name }, "/api/exec_job")
+                    .then(() => {
+                        closeManageJobModal();
+                    })
+                    .catch(err => {
+                        console.error("Failed to exec job:", err);
+                        alert("Failed to execute job");
+                    });
+            } catch (e) {
+                // alert уже показан
+            }
+        }
+
+        function toggleJobFromModal() {
+            try {
+                const name = getJobNameFromModal();
+                sendJSON({ name }, "/api/toggle_job")
+                    .then(() => {
+                        closeManageJobModal();
+                    })
+                    .catch(err => {
+                        console.error("Failed to toggle job:", err);
+                        alert("Failed to toggle job");
+                    });
+            } catch (e) {
+                // alert уже показан
+            }
         }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                closeSetJobModal();
+                if (document.getElementById('setJobModal').style.display === 'block') {
+                    closeSetJobModal();
+                } else if (document.getElementById('manageJobModal').style.display === 'block') {
+                    closeManageJobModal();
+                }
             }
         });
 
         document.addEventListener('DOMContentLoaded', startAutoRefresh);
 
-        // Stop updates if page inactive
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 stopAutoRefresh();
