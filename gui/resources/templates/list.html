@@ -10,21 +10,13 @@
     <div class="container">
         <div class="header">
             <h1>
-                <a target="_blank"
-                    href="https://github.com/laserattack/midnight-runner">
-                    {{.Title}}</a>
+                <a target="_blank" href="https://github.com/laserattack/midnight-runner">{{.Title}}</a>
                 <span id="lastUpdate" class="last-update"></span>
             </h1>
             <h1>
-                <button class="btn"
-                    onclick="openSetJobModal()">
-                    Add/Edit</button>
-                <button class="btn"
-                    onclick="openManageJobModal()">
-                    Delete/Exec/Toggle</button>
-                <button class="btn"
-                    onclick="">
-                    Check log</button>
+                <button class="btn" onclick="openSetJobModal()">Add/Edit</button>
+                <button class="btn" onclick="openManageJobModal()">Delete/Exec/Toggle</button>
+                <button class="btn" onclick="">Check log</button>
             </h1>
         </div>
 
@@ -51,18 +43,15 @@
                     </div>
                     <div class="form-group">
                         <label>Timeout (sec):</label>
-                        <input type="text" name="timeout"
-                        value="30" pattern="[0-9]*">
+                        <input type="text" name="timeout" value="30" pattern="[0-9]*">
                     </div>
                     <div class="form-group">
                         <label>Max Retries:</label>
-                        <input type="text" name="maxRetries"
-                        value="3" pattern="[0-9]*">
+                        <input type="text" name="maxRetries" value="3" pattern="[0-9]*">
                     </div>
                     <div class="form-group">
                         <label>Retry Interval (sec):</label>
-                        <input type="text" name="retryInterval"
-                        value="10" pattern="[0-9]*">
+                        <input type="text" name="retryInterval" value="10" pattern="[0-9]*">
                     </div>
                     <div class="btn-container">
                         <button type="submit" class="btn">Save</button>
@@ -70,7 +59,6 @@
                 </form>
             </div>
         </div>
-
         <div id="manageJobModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeManageJobModal()">&times;</span>
@@ -129,26 +117,15 @@
                 receiveJSON("/api/get_database")
                     .then(data => {
                         updateJobsTable(data);
-                        document.getElementById('lastUpdate')
-                            .textContent =
-                            `Last edit: ${formatTimestamp(data.metadata?.updated_at)}`;
-                        document.getElementById('content')
-                            .style
-                            .display = 'block';
-                        document.getElementById('error')
-                            .style
-                            .display = 'none';
+                        document.getElementById('lastUpdate').textContent = `Last edit: ${formatTimestamp(data.metadata?.updated_at)}`;
+                        document.getElementById('content').style.display = 'block';
+                        document.getElementById('error').style.display = 'none';
                     })
                     .catch(error => {
                         console.error('Error loading database:', error);
-                        document.getElementById('error')
-                            .style
-                            .display = 'block';
-                        document.getElementById('error')
-                            .innerHTML = '<p>Failed to load jobs data</p>';
-                        document.getElementById('content')
-                            .style
-                            .display = 'none';
+                        document.getElementById('error').style.display = 'block';
+                        document.getElementById('error').innerHTML = '<p>Failed to load jobs data</p>';
+                        document.getElementById('content').style.display = 'none';
                     });
             }
 
@@ -157,9 +134,7 @@
         }
 
         function stopAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-            }
+            clearInterval(refreshInterval);
         }
 
         function openSetJobModal() {

@@ -54,22 +54,16 @@ function updateJobsTable(data) {
         }
     });
 
-    document.getElementById('totalJobs')
-        .textContent = jobsArray.length;
-
-    document.getElementById('enabledJobs')
-        .textContent = enabledCount;
-
-    document.getElementById('disabledJobs')
-        .textContent = disabledCount;
+    document.getElementById('totalJobs').textContent = jobsArray.length;
+    document.getElementById('enabledJobs').textContent = enabledCount;
+    document.getElementById('disabledJobs').textContent = disabledCount;
 
     const tableBody = document.getElementById('jobsTableBody');
     tableBody.innerHTML = '';
 
     if (jobsArray.length === 0) {
         document.getElementById('error').style.display = 'block';
-        document.getElementById('error').innerHTML =
-            '<p>No jobs configured</p>';
+        document.getElementById('error').innerHTML = '<p>No jobs configured</p>';
         document.getElementById('content').style.display = 'none';
         return;
     }
