@@ -55,6 +55,7 @@ func CreateWebServer(
 		mux.Handle("/api/delete_job", m(deleteJob(logger, db)))
 		mux.Handle("/api/toggle_job", m(toggleJob(logger, db)))
 		mux.Handle("/api/exec_job", m(execJob(logger, db, ctx)))
+		mux.Handle("/api/last_log", m(lastLog(logger)))
 	}
 
 	return &http.Server{

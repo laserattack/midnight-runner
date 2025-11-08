@@ -1,9 +1,82 @@
 package utils
 
 import (
+	"context"
 	"io"
 	"log/slog"
+	"sync"
 )
+
+// Swappable Writer
+
+type SwappableWriter struct {
+	mu sync.RWMutex
+	w  io.Writer
+}
+
+func NewSwappableWriter(w io.Writer) *SwappableWriter {
+	return &SwappableWriter{
+		w: w,
+	}
+}
+
+func (sw *SwappableWriter) Write(p []byte) (n int, err error) {
+	sw.mu.RLock()
+	defer sw.mu.RUnlock()
+	return sw.w.Write(p)
+}
+
+func (sw *SwappableWriter) Set(w io.Writer) {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+	sw.w = w
+}
+
+// Buffered handler for slog
+
+type SlogBufferedHandler struct {
+	slog.Handler
+	mu         sync.RWMutex
+	buffer     []slog.Record
+	maxRecords int
+}
+
+func NewSlogBufferedHandler(
+	h slog.Handler,
+	maxRecords int,
+) *SlogBufferedHandler {
+	return &SlogBufferedHandler{
+		Handler:    h,
+		buffer:     make([]slog.Record, 0, maxRecords),
+		maxRecords: maxRecords,
+	}
+}
+
+func (bh *SlogBufferedHandler) Handle(
+	ctx context.Context,
+	r slog.Record,
+) error {
+	bh.mu.Lock()
+	if len(bh.buffer) >= bh.maxRecords {
+		bh.buffer = bh.buffer[1:]
+	}
+	bh.buffer = append(bh.buffer, r.Clone())
+	bh.mu.Unlock()
+
+	return bh.Handler.Handle(ctx, r)
+}
+
+func (bh *SlogBufferedHandler) GetLastRecords(n int) []slog.Record {
+	bh.mu.RLock()
+	defer bh.mu.RUnlock()
+	start := 0
+	if len(bh.buffer) > n {
+		start = len(bh.buffer) - n
+	}
+	return bh.buffer[start:]
+}
+
+// Some recipes
 
 func MaybeLogger(logger *slog.Logger, enabled bool) *slog.Logger {
 	if !enabled {

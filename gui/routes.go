@@ -3,18 +3,79 @@ package gui
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"midnight-runner/storage"
+	"midnight-runner/utils"
 )
 
 func rootHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/list", http.StatusFound)
+	}
+}
+
+func lastLog(
+	logger *slog.Logger,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Count uint `json:"count"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			logger.Error("Error decode lastLog json data", "error", err)
+			return
+		}
+
+		defer func() {
+			if err = r.Body.Close(); err != nil {
+				logger.Error("Failed to close request body", "error", err)
+			}
+		}()
+
+		type LogEntry struct {
+			Time    string         `json:"time"`
+			Message string         `json:"message"`
+			Attrs   map[string]any `json:"attrs,omitempty"`
+		}
+
+		if bh, ok := logger.Handler().(*utils.SlogBufferedHandler); ok {
+			records := bh.GetLastRecords(int(req.Count))
+			entries := make([]LogEntry, len(records))
+
+			for i, rec := range records {
+
+				attrs := make(map[string]any)
+				rec.Attrs(func(a slog.Attr) bool {
+					attrs[a.Key] = a.Value.Any()
+					return true
+				})
+
+				entries[i] = LogEntry{
+					Time:    rec.Time.Format(time.RFC3339),
+					Message: rec.Message,
+					Attrs:   attrs,
+				}
+			}
+
+			// send
+
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(entries); err != nil {
+				logger.Error("Failed to encode log entries to JSON",
+					"error", err,
+				)
+				return
+			}
+		} else {
+			logger.Error("Logger handler is not a SlogBufferedHandler")
+			return
+		}
 	}
 }
 
@@ -24,14 +85,13 @@ func execJob(
 	ctx context.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var jobData struct {
+		var req struct {
 			Name string `json:"name"`
 		}
 
-		err := json.NewDecoder(r.Body).Decode(&jobData)
+		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			logger.Error("Error decode execJob json data", "error", err)
-			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -41,7 +101,7 @@ func execJob(
 			}
 		}()
 
-		db.ExecJob(jobData.Name, ctx, logger)
+		db.ExecJob(req.Name, ctx, logger)
 	}
 }
 
@@ -50,14 +110,13 @@ func toggleJob(
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var jobData struct {
+		var req struct {
 			Name string `json:"name"`
 		}
 
-		err := json.NewDecoder(r.Body).Decode(&jobData)
+		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			logger.Error("Error decode toggleJob json data", "error", err)
-			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -67,7 +126,7 @@ func toggleJob(
 			}
 		}()
 
-		db.ToggleJob(jobData.Name)
+		db.ToggleJob(req.Name)
 	}
 }
 
@@ -76,14 +135,13 @@ func deleteJob(
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var jobData struct {
+		var req struct {
 			Name string `json:"name"`
 		}
 
-		err := json.NewDecoder(r.Body).Decode(&jobData)
+		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			logger.Error("Error decode deleteJob json data", "error", err)
-			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -93,7 +151,7 @@ func deleteJob(
 			}
 		}()
 
-		db.DeleteJob(jobData.Name)
+		db.DeleteJob(req.Name)
 	}
 }
 
@@ -102,7 +160,7 @@ func changeJob(
 	db *storage.Database,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var jobData struct {
+		var req struct {
 			Name          string `json:"name"`
 			Description   string `json:"description"`
 			Command       string `json:"command"`
@@ -112,10 +170,9 @@ func changeJob(
 			RetryInterval int    `json:"retryInterval"`
 		}
 
-		err := json.NewDecoder(r.Body).Decode(&jobData)
+		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			logger.Error("Error decode changeJob json data", "error", err)
-			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -126,15 +183,15 @@ func changeJob(
 		}()
 
 		j := storage.ShellJob(
-			jobData.Description,
-			jobData.Command,
-			jobData.Cron,
-			jobData.Timeout,
-			jobData.MaxRetries,
-			jobData.RetryInterval,
+			req.Description,
+			req.Command,
+			req.Cron,
+			req.Timeout,
+			req.MaxRetries,
+			req.RetryInterval,
 		)
 
-		db.SetJob(j, jobData.Name)
+		db.SetJob(j, req.Name)
 	}
 }
 
@@ -146,11 +203,6 @@ func sendDatabase(
 		jsonData, err := db.SerializeWithLock()
 		if err != nil {
 			logger.Error("Failed to serialize database", "error", err)
-			http.Error(
-				w,
-				"Failed to serialize database",
-				http.StatusInternalServerError,
-			)
 			return
 		}
 
@@ -191,11 +243,6 @@ func listHandler(
 		err := tmpl.ExecuteTemplate(w, templateName, templateData)
 		if err != nil {
 			logger.Error("Failed to execute template", "error", err)
-			http.Error(
-				w,
-				"Internal Server Error",
-				http.StatusInternalServerError,
-			)
 			return
 		}
 	}
@@ -221,11 +268,7 @@ func getTemplateAndFallback(
 	if err != nil {
 		logger.Error("Failed to parse template", "error", err)
 		return nil, func(w http.ResponseWriter, r *http.Request) {
-			http.Error(
-				w,
-				fmt.Sprintf("Failed to parse template '%s'", templateName),
-				http.StatusInternalServerError,
-			)
+			return
 		}
 	}
 	return tmpl, nil

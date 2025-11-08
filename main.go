@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -19,6 +19,11 @@ import (
 	"github.com/jessevdk/go-flags"
 	qLogger "github.com/reugn/go-quartz/logger"
 	"github.com/reugn/go-quartz/quartz"
+)
+
+const (
+	defaultDatabaseName = "midnight-runner-database.json"
+	defaultLogFileName  = "midnight-runner-log"
 )
 
 type flagOpts struct {
@@ -37,7 +42,12 @@ type flagOpts struct {
 func main() {
 	//  NOTE: Setup logger
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logWriter := utils.NewSwappableWriter(os.Stdout)
+	logHandler := utils.NewSlogBufferedHandler(
+		slog.NewTextHandler(logWriter, nil),
+		100,
+	)
+	logger := slog.New(logHandler)
 
 	//  NOTE: Parse args
 
@@ -53,23 +63,57 @@ func main() {
 		return
 	}
 
+	//
+
+	logFilePath, err := utils.ResolveFileInDefaultConfigDir(
+		defaultLogFileName,
+		func(fullPath string) error {
+			return nil
+		},
+	)
+	if err != nil {
+		logger.Warn("Failed to resolve log file path", "error", err)
+	} else {
+		logFile, err := os.OpenFile(
+			logFilePath,
+			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+			0o644,
+		)
+		if err != nil {
+			logger.Error("Failed to open log file",
+				"file", logFilePath,
+				"error", err,
+			)
+		} else {
+			logWriter.Set(io.MultiWriter(os.Stdout, logFile))
+			defer func() {
+				if err := logFile.Close(); err != nil {
+					slog.New(slog.NewTextHandler(os.Stdout, nil)).Error(
+						"Failed to close log file",
+						"file", logFilePath,
+						"error", err,
+					)
+				}
+			}()
+		}
+	}
+
+	//
+
 	dbPath := fo.DatabasePath
 	if dbPath == "" {
-		dbDir, err := os.UserConfigDir()
+		dbPath, err = utils.ResolveFileInDefaultConfigDir(
+			defaultDatabaseName,
+			func(fullPath string) error {
+				return storage.New().SaveToFile(fullPath)
+			},
+		)
 		if err != nil {
-			logger.Error("The -d / --database flag is not specified" +
-				" and the default config directory could not be determined")
+			logger.Error("Failed to resolve database file",
+				"file", dbPath,
+				"error", err,
+			)
 			return
-		}
-
-		dbPath = filepath.Join(dbDir, "midnight-runner-database.json")
-
-		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-			db := storage.New()
-			if err = db.SaveToFile(dbPath); err != nil {
-				logger.Error("Failed to save database", "error", err)
-				return
-			}
 		}
 	}
 
