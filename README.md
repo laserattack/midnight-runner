@@ -52,6 +52,15 @@ translates to "last weekday of the month".
 
 In the repo directory run `go build -o <filename>`
 
+# Build using Docker
+
+```
+docker build -t mr-builder .
+docker create --name mr-temp mr-builder
+docker cp mr-temp:/app/mr ./mr
+docker rm mr-temp
+```
+
 # Dependencies
 
 - [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
