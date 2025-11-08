@@ -1,5 +1,9 @@
 # 🌙⚙️ Midnight Runner
 
+A simple cron-like shell task runner
+
+![1](pics/base.png)
+
 ## Dependencies
 
 - [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
@@ -7,7 +11,6 @@
 
 ## Manage
 
-![1](pics/base.png)
 
 ![3](pics/setjob.png)
 
