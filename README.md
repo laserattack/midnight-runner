@@ -7,9 +7,9 @@
 
 ## Manage
 
-![1](pics/Pasted image 20251108174728.png)
-![2](pics/Pasted image 20251108174748.png)
-![3](pics/Pasted image 20251108174844.png)
+![1](pics/base.png)
+![2](pics/logs.png)
+![3](pics/setjob.png)
 
 ## Cron expression format
 
