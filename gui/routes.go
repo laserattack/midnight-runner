@@ -267,9 +267,7 @@ func getTemplateAndFallback(
 		ParseFS(templatesFS, templateName)
 	if err != nil {
 		logger.Error("Failed to parse template", "error", err)
-		return nil, func(w http.ResponseWriter, r *http.Request) {
-			return
-		}
+		return nil, func(w http.ResponseWriter, r *http.Request) {}
 	}
 	return tmpl, nil
 }
