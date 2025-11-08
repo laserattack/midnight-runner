@@ -34,7 +34,7 @@ type flagOpts struct {
 	WebServerShutdownTimeout    uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
 	MemStatsInterval            uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
 	HTTPLog                     bool   `long:"http-log" description:"Log messages about HTTP connections"`
-	LogFileMaxSizeBytes         uint64 `long:"log-file-max-size" description:"Log file max size in bytes" default:"104857600"`
+	LogFileMaxSizeBytes         uint64 `long:"log-file-max-size" description:"Log file max size in bytes" default:"10485760"`
 }
 
 //  TODO: По каждой джобе должна быть возможность посмотреть ее логи
