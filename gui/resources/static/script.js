@@ -10,6 +10,7 @@ function sendJSON(jsonData, endpoint) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        return response;
     });
 }
 
@@ -40,6 +41,12 @@ function formatTimestamp(timestamp) {
 }
 
 function updateJobsTable(data) {
+
+    const selection = window.getSelection();
+    if (!selection.isCollapsed) {
+        return;
+    }
+
     const jobs = data.jobs || {};
     const jobsArray = Object.entries(jobs);
 

@@ -163,6 +163,19 @@ body {
     }
 }
 
+.logs-container {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.7rem;
+    white-space: pre-wrap;
+    color: #cbd5e1;
+}
+
 .form-group {
     margin: 15px 0;
 
