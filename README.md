@@ -4,11 +4,6 @@ A simple cross-platform cron-like shell task runner with a web UI
 
 ![1](.pics/base.png)
 
-# Dependencies
-
-- [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
-- [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
-
 # Manage
 
 To create a new job or modify an existing one, use the `Add/Edit` button. If you specify the name of an existing job, it will be overwritten; if the name does not exist, a new job will be created
@@ -52,3 +47,8 @@ Watch logs in real time (`Logs` button)
 translates to "last weekday of the month".
 
 <sup>2</sup> The names of months and days of the week are not case-sensitive. MON is the same as mon.
+
+# Dependencies
+
+- [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
+- [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
