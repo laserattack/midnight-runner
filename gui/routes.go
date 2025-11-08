@@ -51,12 +51,17 @@ func lastLog(
 			for i, rec := range records {
 				attrs := make(map[string]any)
 				rec.Attrs(func(a slog.Attr) bool {
-					attrs[a.Key] = a.Value.Any()
+					v := a.Value.Any()
+					if err, ok := v.(error); ok {
+						attrs[a.Key] = err.Error()
+					} else {
+						attrs[a.Key] = v
+					}
 					return true
 				})
 
 				entries[i] = LogEntry{
-					Time:    rec.Time.Format(time.RFC3339),
+					Time:    rec.Time.Format("2006-01-02T15:04:05.000Z07:00"),
 					Message: rec.Message,
 					Attrs:   attrs,
 				}
