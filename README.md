@@ -1,6 +1,6 @@
 # 🌙⚙️ Midnight Runner
 
-A simple cron-like shell task runner with a web UI
+A simple cross-platform cron-like shell task runner with a web UI
 
 ![1](.pics/base.png)
 
