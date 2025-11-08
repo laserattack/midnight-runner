@@ -54,11 +54,20 @@ In the repo directory run `go build -o <filename>`
 
 # Build using Docker
 
+Build:
+
 ```
 docker build -t mr-builder .
 docker create --name mr-temp mr-builder
 docker cp mr-temp:/app/mr ./mr
 docker rm mr-temp
+```
+
+Clean up:
+
+```
+docker rmi mr-builder:latest
+docker rmi golang:1.25.3
 ```
 
 # Dependencies
