@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -16,8 +15,6 @@ func ResolveFileInDefaultConfigDir(
 	}
 
 	fullPath = filepath.Join(configDir, name)
-
-	fmt.Println(fullPath)
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		if err := createFile(fullPath); err != nil {

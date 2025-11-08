@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"os"
 	"sync"
 )
 
@@ -83,4 +84,15 @@ func MaybeLogger(logger *slog.Logger, enabled bool) *slog.Logger {
 		return slog.New(slog.NewTextHandler(io.Discard, nil))
 	}
 	return logger
+}
+
+func OpenLogFile(path string, maxSizeBytes int64) (*os.File, error) {
+	if info, err := os.Stat(path); err == nil {
+		if info.Size() >= maxSizeBytes {
+			if err := os.WriteFile(path, nil, 0o644); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 }

@@ -49,7 +49,6 @@ func lastLog(
 			entries := make([]LogEntry, len(records))
 
 			for i, rec := range records {
-
 				attrs := make(map[string]any)
 				rec.Attrs(func(a slog.Attr) bool {
 					attrs[a.Key] = a.Value.Any()

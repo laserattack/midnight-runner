@@ -27,13 +27,14 @@ const (
 )
 
 type flagOpts struct {
-	DatabasePath                string `short:"d" long:"database" description:"Database file path"`
+	DatabasePath                string `short:"d" long:"database" description:"Path to the database file (default: in system config directory)"`
 	WebServerPort               uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
 	DatabaseSyncInterval        uint   `long:"sync-interval" description:"Database sync interval in seconds" default:"1"`
 	DatabaseSyncAttemptMaxCount uint32 `long:"max-sync-attempts" description:"Max consecutive database sync attempts before shutdown" default:"10"`
 	WebServerShutdownTimeout    uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
 	MemStatsInterval            uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
 	HTTPLog                     bool   `long:"http-log" description:"Log messages about HTTP connections"`
+	LogFileMaxSizeBytes         uint64 `long:"log-file-max-size" description:"Log file max size in bytes" default:"104857600"`
 }
 
 //  TODO: По каждой джобе должна быть возможность посмотреть ее логи
@@ -63,6 +64,25 @@ func main() {
 		return
 	}
 
+	logFileMaxSizeBytes := fo.LogFileMaxSizeBytes
+	dbPath := fo.DatabasePath
+	dbSyncInterval := fo.DatabaseSyncInterval
+	dbSyncAttemptMaxCount := fo.DatabaseSyncAttemptMaxCount
+	webServerPort := fmt.Sprint(fo.WebServerPort)
+	webServerShutdownTimeout := fo.WebServerShutdownTimeout
+	memStatsInterval := fo.MemStatsInterval
+	HTTPLog := fo.HTTPLog
+
+	if dbSyncInterval == 0 {
+		logger.Error("Database reload interval must be positive")
+		return
+	}
+
+	if dbSyncAttemptMaxCount == 0 {
+		logger.Error("Maximum database update attempts must be positive")
+		return
+	}
+
 	//
 
 	logFilePath, err := utils.ResolveFileInDefaultConfigDir(
@@ -74,10 +94,9 @@ func main() {
 	if err != nil {
 		logger.Warn("Failed to resolve log file path", "error", err)
 	} else {
-		logFile, err := os.OpenFile(
+		logFile, err := utils.OpenLogFile(
 			logFilePath,
-			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-			0o644,
+			int64(logFileMaxSizeBytes),
 		)
 		if err != nil {
 			logger.Error("Failed to open log file",
@@ -100,7 +119,6 @@ func main() {
 
 	//
 
-	dbPath := fo.DatabasePath
 	if dbPath == "" {
 		dbPath, err = utils.ResolveFileInDefaultConfigDir(
 			defaultDatabaseName,
@@ -117,23 +135,6 @@ func main() {
 		}
 	}
 
-	dbSyncInterval := fo.DatabaseSyncInterval
-	dbSyncAttemptMaxCount := fo.DatabaseSyncAttemptMaxCount
-	webServerPort := fmt.Sprint(fo.WebServerPort)
-	webServerShutdownTimeout := fo.WebServerShutdownTimeout
-	memStatsInterval := fo.MemStatsInterval
-	HTTPLog := fo.HTTPLog
-
-	if dbSyncInterval == 0 {
-		logger.Error("Database reload interval must be positive")
-		return
-	}
-
-	if dbSyncAttemptMaxCount == 0 {
-		logger.Error("Maximum database update attempts must be positive")
-		return
-	}
-
 	logger.Info("Program started with configuration",
 		"database", dbPath,
 		"sync-interval", dbSyncInterval,
@@ -142,6 +143,7 @@ func main() {
 		"server-shutdown-timeout", webServerShutdownTimeout,
 		"mem-stats-interval", memStatsInterval,
 		"http-log", HTTPLog,
+		"logFileMaxSizeBytes", logFileMaxSizeBytes,
 	)
 
 	//  NOTE: Setup signal's handler
