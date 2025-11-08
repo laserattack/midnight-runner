@@ -4,12 +4,12 @@ A simple cross-platform cron-like shell task runner with a web UI
 
 ![1](.pics/base.png)
 
-## Dependencies
+# Dependencies
 
 - [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
 - [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
 
-## Manage
+# Manage
 
 To create a new job or modify an existing one, use the `Add/Edit` button. If you specify the name of an existing job, it will be overwritten; if the name does not exist, a new job will be created
 
@@ -19,7 +19,7 @@ Watch logs in real time (`Logs` button)
 
 ![2](.pics/logs.png)
 
-## Cron expression format
+# Cron expression format
 
 | Field Name   | Mandatory | Allowed Values  | Allowed Special Characters |
 |--------------|-----------|-----------------|----------------------------|
@@ -31,7 +31,7 @@ Watch logs in real time (`Logs` button)
 | Day of week  | YES       | 1-7 or SUN-SAT  | , - * ? / L #              |
 | Year         | NO        | empty, 1970-    | , - * /                    |
 
-### Special characters
+## Special characters
 
 - `*`: All values in a field (e.g., `*` in minutes = "every minute").
 - `?`: No specific value; use when specifying one of two related fields (e.g., "10" in day-of- month, `?` in
