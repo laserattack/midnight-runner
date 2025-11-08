@@ -5,6 +5,12 @@
 - [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
 - [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
 
+## Manage
+
+![1](./pics/Pasted image 20251108174728.png)
+![1](./pics/Pasted image 20251108174748.png)
+![1](./pics/Pasted image 20251108174844.png)
+
 ## Cron expression format
 
 | Field Name   | Mandatory | Allowed Values  | Allowed Special Characters |
