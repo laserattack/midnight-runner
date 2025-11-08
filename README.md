@@ -48,7 +48,7 @@ translates to "last weekday of the month".
 
 <sup>2</sup> The names of months and days of the week are not case-sensitive. MON is the same as mon.
 
-# Build
+# Build using go
 
 In the repo directory run `go build -o <filename>`
 
