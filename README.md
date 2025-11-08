@@ -8,8 +8,10 @@
 ## Manage
 
 ![1](pics/base.png)
-![2](pics/logs.png)
+
 ![3](pics/setjob.png)
+
+![2](pics/logs.png)
 
 ## Cron expression format
 
