@@ -272,7 +272,15 @@
 
                         const lines = entries.map(entry => {
                             const time = entry.time || '';
-                            const msg = entry.message || '';
+                            let msg = entry.message || '';
+
+                            if (msg.includes('Command failed')) {
+                                msg = msg.replace(/Command failed/g, '<span style="color: #ef4444;">Command failed</span>');
+                            }
+                            if (msg.includes('Command completed successfully')) {
+                                msg = msg.replace(/Command completed successfully/g, '<span style="color: #16a34a;">Command completed successfully</span>');
+                            }
+
                             const attrsStr = entry.attrs && Object.keys(entry.attrs).length
                                 ? ' ' + JSON.stringify(entry.attrs, null, 0)
                                 : '';

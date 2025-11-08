@@ -37,7 +37,6 @@ type flagOpts struct {
 	LogFileMaxSizeBytes         uint64 `long:"log-file-max-size" description:"Log file max size in bytes" default:"10485760"`
 }
 
-//  TODO: По каждой джобе должна быть возможность посмотреть ее логи
 //  TODO: Потестить граничные входные данные в полях ввода
 
 func main() {

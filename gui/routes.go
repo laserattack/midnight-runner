@@ -164,9 +164,9 @@ func changeJob(
 			Description   string `json:"description"`
 			Command       string `json:"command"`
 			Cron          string `json:"cron"`
-			Timeout       int    `json:"timeout"`
-			MaxRetries    int    `json:"maxRetries"`
-			RetryInterval int    `json:"retryInterval"`
+			Timeout       uint   `json:"timeout"`
+			MaxRetries    uint   `json:"maxRetries"`
+			RetryInterval uint   `json:"retryInterval"`
 		}
 
 		err := json.NewDecoder(r.Body).Decode(&req)
@@ -185,9 +185,9 @@ func changeJob(
 			req.Description,
 			req.Command,
 			req.Cron,
-			req.Timeout,
-			req.MaxRetries,
-			req.RetryInterval,
+			int(req.Timeout),
+			int(req.MaxRetries),
+			int(req.RetryInterval),
 		)
 
 		db.SetJob(j, req.Name)
