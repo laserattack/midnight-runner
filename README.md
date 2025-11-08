@@ -11,7 +11,7 @@ A simple cron-like shell task runner with a web UI
 
 ## Manage
 
-To create a new job or modify an existing one, use the `Add/Edit` button. If you specify the name of an existing job, it will be overwritten; if the name does not exist, a new job will be created.
+To create a new job or modify an existing one, use the `Add/Edit` button. If you specify the name of an existing job, it will be overwritten; if the name does not exist, a new job will be created
 
 ![3](pics/setjob.png)
 
