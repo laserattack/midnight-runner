@@ -15,7 +15,7 @@ A simple cron-like shell task runner with a web UI
 
 ![3](pics/setjob.png)
 
-Watch logs in real time (Logs button)
+Watch logs in real time (`Logs` button)
 
 ![2](pics/logs.png)
 
