@@ -143,7 +143,7 @@ func main() {
 		"server-shutdown-timeout", webServerShutdownTimeout,
 		"mem-stats-interval", memStatsInterval,
 		"http-log", HTTPLog,
-		"logFileMaxSizeBytes", logFileMaxSizeBytes,
+		"log-file-max-size", logFileMaxSizeBytes,
 	)
 
 	//  NOTE: Setup signal's handler
