@@ -168,7 +168,7 @@ func LoadFromFile(filepath string) (*Database, error) {
 
 //  NOTE: Save database to file
 
-//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE MUTEX ON DB
+//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE DB MUTEX
 
 func (db *Database) SaveToFile(filepath string) error {
 	databaseFileMutex.Lock()

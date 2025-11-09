@@ -32,9 +32,10 @@ type flagOpts struct {
 	DatabaseSyncInterval        uint   `long:"sync-interval" description:"Database sync interval in seconds" default:"1"`
 	DatabaseSyncAttemptMaxCount uint32 `long:"max-sync-attempts" description:"Max consecutive database sync attempts before shutdown" default:"10"`
 	WebServerShutdownTimeout    uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
-	MemStatsInterval            uint   `long:"mem-stats-interval" description:"Interval in seconds for printing memory statistics (for leak detection)" default:"0"`
+	MemStatsInterval            uint   `long:"mem-stats-interval" description:"Interval in seconds for logging memory statistics (for leak detection). It also causes garbage collection. Disable - 0 value" default:"1800"`
 	HTTPLog                     bool   `long:"http-log" description:"Log messages about HTTP connections"`
-	LogFileMaxSizeBytes         uint64 `long:"log-file-max-size" description:"Log file max size in bytes" default:"10485760"`
+	LogFileMaxSizeBytes         uint64 `long:"log-file-max-size" description:"Log file max size in bytes (if the max size is reached the file will be overwritten)" default:"10485760"`
+	Cleanup                     bool   `long:"cleanup" description:"Delete all files created by the program in system config directory and shut down"`
 }
 
 //  TODO: Потестить граничные входные данные в полях ввода
@@ -71,6 +72,19 @@ func main() {
 	webServerShutdownTimeout := fo.WebServerShutdownTimeout
 	memStatsInterval := fo.MemStatsInterval
 	HTTPLog := fo.HTTPLog
+	cleanup := fo.Cleanup
+
+	logger.Info("Program started with configuration",
+		"database", dbPath,
+		"sync-interval", dbSyncInterval,
+		"max-sync-attempts", dbSyncAttemptMaxCount,
+		"port", webServerPort,
+		"server-shutdown-timeout", webServerShutdownTimeout,
+		"mem-stats-interval", memStatsInterval,
+		"http-log", HTTPLog,
+		"log-file-max-size", logFileMaxSizeBytes,
+		"cleanup", cleanup,
+	)
 
 	if dbSyncInterval == 0 {
 		logger.Error("Database reload interval must be positive")
@@ -92,7 +106,7 @@ func main() {
 	)
 	if err != nil {
 		logger.Warn("Failed to resolve log file path", "error", err)
-	} else {
+	} else if !cleanup {
 		logFile, err := utils.OpenLogFile(
 			logFilePath,
 			int64(logFileMaxSizeBytes),
@@ -114,6 +128,13 @@ func main() {
 				}
 			}()
 		}
+	} else if cleanup {
+		if err := os.Remove(logFilePath); err != nil {
+			logger.Warn("Failed to delete log file",
+				"file", logFilePath,
+				"error", err,
+			)
+		}
 	}
 
 	//
@@ -122,7 +143,7 @@ func main() {
 		dbPath, err = utils.ResolveFileInDefaultConfigDir(
 			defaultDatabaseName,
 			func(fullPath string) error {
-				return storage.New().SaveToFile(fullPath)
+				return storage.New().SaveToFile(dbPath)
 			},
 		)
 		if err != nil {
@@ -134,16 +155,16 @@ func main() {
 		}
 	}
 
-	logger.Info("Program started with configuration",
-		"database", dbPath,
-		"sync-interval", dbSyncInterval,
-		"max-sync-attempts", dbSyncAttemptMaxCount,
-		"port", webServerPort,
-		"server-shutdown-timeout", webServerShutdownTimeout,
-		"mem-stats-interval", memStatsInterval,
-		"http-log", HTTPLog,
-		"log-file-max-size", logFileMaxSizeBytes,
-	)
+	if cleanup {
+		if err := os.Remove(dbPath); err != nil {
+			logger.Warn("Failed to delete database file",
+				"file", dbPath,
+				"error", err,
+			)
+		}
+		logger.Info("Cleanup done")
+		return
+	}
 
 	//  NOTE: Setup signal's handler
 

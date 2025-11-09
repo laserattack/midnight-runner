@@ -11,7 +11,7 @@ import (
 	"github.com/reugn/go-quartz/quartz"
 )
 
-//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE MUTEX ON DB
+//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE DB MUTEX
 
 func RegisterJobs(
 	// quartz.Scheduler = &StdScheduler, 8 bytes
@@ -21,7 +21,7 @@ func RegisterJobs(
 ) error {
 	// j - *Job, 8 bytes (cheap copying)
 	for jk, j := range db.Jobs {
-		if j.Type == TypeShell && j.Config.Status != StatusDisable {
+		if j.Config.Status != StatusDisable {
 			err := registerShellJob(scheduler, db, jk, logger)
 			if err != nil {
 				return err
