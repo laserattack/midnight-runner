@@ -2,74 +2,146 @@
 package extjob
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io"
+	"os/exec"
+	"sync"
 	"time"
 
-	"github.com/reugn/go-quartz/job"
+	"github.com/reugn/go-quartz/quartz"
 )
 
-type TimeoutShellJob struct {
-	command    string
+type Status int8
+
+const (
+	StatusNA Status = iota
+	StatusOK
+	StatusFailure
+)
+
+type ShellJob struct {
+	mtx        sync.Mutex
+	cmd        string
+	exitCode   int
+	stdout     string
+	stderr     string
+	jobStatus  Status
 	timeout    time.Duration
-	shellJob   *job.ShellJob
-	beforeExec func(ctx context.Context, j *job.ShellJob)
-	afterExec  func(ctx context.Context, j *job.ShellJob)
+	beforeExec func(context.Context, *ShellJob)
+	afterExec  func(context.Context, *ShellJob)
 }
 
-func (j *TimeoutShellJob) Execute(ctx context.Context) error {
+var _ quartz.Job = (*ShellJob)(nil)
+
+func NewShellJob(cmd string) *ShellJob {
+	return &ShellJob{
+		cmd:       cmd,
+		jobStatus: StatusNA,
+	}
+}
+
+func NewShellJobWithCallbacks(
+	cmd string,
+	timeout time.Duration,
+	beforeExec func(ctx context.Context, j *ShellJob),
+	afterExec func(ctx context.Context, j *ShellJob),
+) *ShellJob {
+	return &ShellJob{
+		cmd:        cmd,
+		jobStatus:  StatusNA,
+		timeout:    timeout,
+		beforeExec: beforeExec,
+		afterExec:  afterExec,
+	}
+}
+
+func (sh *ShellJob) Description() string {
+	return fmt.Sprintf("ShellJob%s%s", quartz.Sep, sh.cmd)
+}
+
+var (
+	shellOnce = sync.Once{}
+	shellPath = "bash"
+)
+
+func getShell() string {
+	shellOnce.Do(func() {
+		_, err := exec.LookPath("/bin/bash")
+		// if bash binary is not found, use `sh`.
+		if err != nil {
+			shellPath = "sh"
+		}
+	})
+	return shellPath
+}
+
+func (sh *ShellJob) execute(ctx context.Context) error {
+	shell := getShell()
+
+	var stdout, stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, shell, "-c", sh.cmd)
+	cmd.Stdout = io.Writer(&stdout)
+	cmd.Stderr = io.Writer(&stderr)
+
+	err := cmd.Run()
+
+	sh.mtx.Lock()
+	sh.stdout, sh.stderr = stdout.String(), stderr.String()
+	sh.exitCode = cmd.ProcessState.ExitCode()
+
+	if err != nil {
+		sh.jobStatus = StatusFailure
+	} else {
+		sh.jobStatus = StatusOK
+	}
+	sh.mtx.Unlock()
+
+	return err
+}
+
+func (j *ShellJob) Execute(ctx context.Context) error {
 	if j.beforeExec != nil {
-		j.beforeExec(ctx, j.shellJob)
+		j.beforeExec(ctx, j)
 	}
 
 	var err error
 	if j.timeout <= 0 {
-		err = j.shellJob.Execute(ctx)
+		err = j.execute(ctx)
 	} else {
 		timeoutCtx, cancel := context.WithTimeout(ctx, j.timeout)
 		defer cancel()
-		err = j.shellJob.Execute(timeoutCtx)
+		err = j.execute(timeoutCtx)
 	}
 
 	if j.afterExec != nil {
-		j.afterExec(ctx, j.shellJob)
+		j.afterExec(ctx, j)
 	}
 
 	return err
 }
 
-func (j *TimeoutShellJob) Description() string {
-	return j.shellJob.Description()
+func (sh *ShellJob) ExitCode() int {
+	sh.mtx.Lock()
+	defer sh.mtx.Unlock()
+	return sh.exitCode
 }
 
-func (j *TimeoutShellJob) JobStatus() job.Status {
-	return j.shellJob.JobStatus()
+func (sh *ShellJob) Stdout() string {
+	sh.mtx.Lock()
+	defer sh.mtx.Unlock()
+	return sh.stdout
 }
 
-func (j *TimeoutShellJob) ExitCode() int {
-	return j.shellJob.ExitCode()
+func (sh *ShellJob) Stderr() string {
+	sh.mtx.Lock()
+	defer sh.mtx.Unlock()
+	return sh.stderr
 }
 
-func (j *TimeoutShellJob) Stdout() string {
-	return j.shellJob.Stdout()
-}
-
-func (j *TimeoutShellJob) Stderr() string {
-	return j.shellJob.Stderr()
-}
-
-func NewShellJobWithCallbacks(
-	command string,
-	timeout time.Duration,
-	beforeExec func(ctx context.Context, j *job.ShellJob),
-	afterExec func(ctx context.Context, j *job.ShellJob),
-) *TimeoutShellJob {
-	shellJob := job.NewShellJob(command)
-
-	return &TimeoutShellJob{
-		command:    command,
-		timeout:    timeout,
-		shellJob:   shellJob,
-		beforeExec: beforeExec,
-		afterExec:  afterExec,
-	}
+func (sh *ShellJob) JobStatus() Status {
+	sh.mtx.Lock()
+	defer sh.mtx.Unlock()
+	return sh.jobStatus
 }

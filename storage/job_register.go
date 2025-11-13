@@ -7,7 +7,6 @@ import (
 
 	"midnight-runner/extjob"
 
-	"github.com/reugn/go-quartz/job"
 	"github.com/reugn/go-quartz/quartz"
 )
 
@@ -95,8 +94,8 @@ func createBeforeExecCallback(
 	j *Job,
 	logger *slog.Logger,
 	logFields []any,
-) func(context.Context, *job.ShellJob) {
-	return func(ctx context.Context, qj *job.ShellJob) {
+) func(context.Context, *extjob.ShellJob) {
+	return func(ctx context.Context, qj *extjob.ShellJob) {
 		db.Mu.Lock()
 		switch j.Config.Status {
 		case StatusEnable:
@@ -115,8 +114,8 @@ func createAfterExecCallback(
 	j *Job,
 	logger *slog.Logger,
 	logFields []any,
-) func(context.Context, *job.ShellJob) {
-	return func(ctx context.Context, qj *job.ShellJob) {
+) func(context.Context, *extjob.ShellJob) {
+	return func(ctx context.Context, qj *extjob.ShellJob) {
 		db.Mu.Lock()
 		switch j.Config.Status {
 		case StatusActiveDuringDisable:
@@ -129,9 +128,9 @@ func createAfterExecCallback(
 		status := qj.JobStatus()
 
 		switch status {
-		case job.StatusOK:
+		case extjob.StatusOK:
 			logger.Info("Command completed successfully", logFields...)
-		case job.StatusFailure:
+		case extjob.StatusFailure:
 			select {
 			case <-ctx.Done():
 				logger.Warn("Command timeout exceeded", logFields...)
