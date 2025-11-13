@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"runtime"
 	"sync"
 	"time"
 
@@ -63,40 +64,49 @@ func (sh *ShellJob) Description() string {
 
 var (
 	shellOnce = sync.Once{}
-	shellPath = "bash"
+	shellPath string
+	shellArgs []string
 )
 
-func getShell() string {
+func getShell() (string, []string) {
 	shellOnce.Do(func() {
-		_, err := exec.LookPath("/bin/bash")
-		// if bash binary is not found, use `sh`.
-		if err != nil {
-			shellPath = "sh"
+		switch runtime.GOOS {
+		case "windows":
+			shellPath = "cmd"
+			shellArgs = []string{"/c"}
+		default:
+			// Try bash first, fallback to sh
+			shell := "sh"
+			if _, err := exec.LookPath("bash"); err == nil {
+				shell = "bash"
+			}
+			shellPath = shell
+			shellArgs = []string{"-c"}
 		}
 	})
-	return shellPath
+	return shellPath, shellArgs
 }
 
-func (sh *ShellJob) execute(ctx context.Context) error {
-	shell := getShell()
+func (j *ShellJob) execute(ctx context.Context) error {
+	shell, args := getShell()
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, shell, "-c", sh.cmd)
+	cmd := exec.CommandContext(ctx, shell, append(args, j.cmd)...)
 	cmd.Stdout = io.Writer(&stdout)
 	cmd.Stderr = io.Writer(&stderr)
 
 	err := cmd.Run()
 
-	sh.mtx.Lock()
-	sh.stdout, sh.stderr = stdout.String(), stderr.String()
-	sh.exitCode = cmd.ProcessState.ExitCode()
+	j.mtx.Lock()
+	j.stdout, j.stderr = stdout.String(), stderr.String()
+	j.exitCode = cmd.ProcessState.ExitCode()
 
 	if err != nil {
-		sh.jobStatus = StatusFailure
+		j.jobStatus = StatusFailure
 	} else {
-		sh.jobStatus = StatusOK
+		j.jobStatus = StatusOK
 	}
-	sh.mtx.Unlock()
+	j.mtx.Unlock()
 
 	return err
 }

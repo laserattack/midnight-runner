@@ -145,7 +145,7 @@ func main() {
 		dbPath, err = utils.ResolveFileInDefaultConfigDir(
 			defaultDatabaseName,
 			func(fullPath string) error {
-				return storage.New().SaveToFile(dbPath)
+				return storage.New().SaveToFile(fullPath)
 			},
 		)
 		if err != nil {
