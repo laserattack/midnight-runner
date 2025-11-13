@@ -2,8 +2,6 @@
 
 A simple cron-like shell task runner with a web UI
 
-*so far, only Linux systems*
-
 ![1](.pics/base.png)
 
 # Manage
