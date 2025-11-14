@@ -39,22 +39,14 @@ func registerShellJob(
 ) error {
 	j := db.Jobs[jobKey]
 
-	description := j.Description
 	command := j.Config.Command
 	maxRetries := j.Config.MaxRetries
 	retryInterval := j.Config.RetryInterval
 	cronExpression := j.Config.CronExpression
 	timeout := j.Config.Timeout
 
-	logFields := []any{
-		"name", jobKey,
-		"description", description,
-		"command", command,
-		"cron_expression", cronExpression,
-	}
-
-	beforeExec := createBeforeExecCallback(db, j, logger, logFields)
-	afterExec := createAfterExecCallback(db, j, logger, logFields)
+	beforeExec := createBeforeExecCallback(db, jobKey, logger)
+	afterExec := createAfterExecCallback(db, jobKey, logger)
 
 	quartzJob := extjob.NewShellJobWithCallbacks(
 		command,
@@ -91,12 +83,18 @@ func registerShellJob(
 
 func createBeforeExecCallback(
 	db *Database,
-	j *Job,
+	jobKey string,
 	logger *slog.Logger,
-	logFields []any,
 ) func(context.Context, *extjob.ShellJob) {
 	return func(ctx context.Context, qj *extjob.ShellJob) {
 		db.Mu.Lock()
+
+		j := db.Jobs[jobKey]
+
+		description := j.Description
+		command := j.Config.Command
+		cronExpression := j.Config.CronExpression
+
 		switch j.Config.Status {
 		case StatusEnable:
 			j.Config.Status = StatusActiveDuringEnable
@@ -105,18 +103,29 @@ func createBeforeExecCallback(
 		}
 		db.Mu.Unlock()
 
-		logger.Info("Start command execution", logFields...)
+		logger.Info("Start command execution",
+			"name", jobKey,
+			"description", description,
+			"command", command,
+			"cron_expression", cronExpression,
+		)
 	}
 }
 
 func createAfterExecCallback(
 	db *Database,
-	j *Job,
+	jobKey string,
 	logger *slog.Logger,
-	logFields []any,
 ) func(context.Context, *extjob.ShellJob) {
 	return func(ctx context.Context, qj *extjob.ShellJob) {
 		db.Mu.Lock()
+
+		j := db.Jobs[jobKey]
+
+		description := j.Description
+		command := j.Config.Command
+		cronExpression := j.Config.CronExpression
+
 		switch j.Config.Status {
 		case StatusActiveDuringDisable:
 			j.Config.Status = StatusDisable
@@ -129,14 +138,23 @@ func createAfterExecCallback(
 
 		switch status {
 		case extjob.StatusOK:
-			logger.Info("Command completed successfully", logFields...)
+			logger.Info("Command completed successfully",
+				"name", jobKey,
+				"description", description,
+				"command", command,
+				"cron_expression", cronExpression,
+				"Stdout", qj.Stdout(),
+				"Stderr", qj.Stderr(),
+			)
 		case extjob.StatusFailure:
-			select {
-			case <-ctx.Done():
-				logger.Warn("Command timeout exceeded", logFields...)
-			default:
-				logger.Warn("Command failed", logFields...)
-			}
+			logger.Warn("Command failed",
+				"name", jobKey,
+				"description", description,
+				"command", command,
+				"cron_expression", cronExpression,
+				"Stdout", qj.Stdout(),
+				"Stderr", qj.Stderr(),
+			)
 		}
 	}
 }

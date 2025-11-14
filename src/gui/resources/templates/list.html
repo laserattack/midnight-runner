@@ -276,28 +276,20 @@
                     .then(response => response.json())
                     .then(entries => {
                         if (entries.length === 0) {
-                            logsContent.innerHTML = '<p>No logs available.</p>';
+                            logsContent.textContent = 'No logs available.';
                             return;
                         }
 
                         const lines = entries.map(entry => {
                             const time = entry.time || '';
-                            let msg = entry.message || '';
-
-                            if (msg.includes('Command failed')) {
-                                msg = msg.replace(/Command failed/g, '<span style="color: #B34242;">Command failed</span>');
-                            }
-                            if (msg.includes('Command completed successfully')) {
-                                msg = msg.replace(/Command completed successfully/g, '<span style="color: #7CB342;">Command completed successfully</span>');
-                            }
-
+                            const msg = entry.message || '';
                             const attrsStr = entry.attrs && Object.keys(entry.attrs).length
                                 ? ' ' + JSON.stringify(entry.attrs, null, 0)
                                 : '';
-                            return `<span style="color: #4f46e5;">${time}</span> — ${msg}${attrsStr}`;
+                            return `${time} — ${msg}${attrsStr}`;
                         });
 
-                        logsContent.innerHTML = lines.join('<br>');
+                        logsContent.textContent = lines.join('\n\n');
 
                         if (wasAtBottom) {
                             logsContent.scrollTop = logsContent.scrollHeight;
@@ -305,12 +297,11 @@
                     })
                     .catch(err => {
                         console.error("Failed to load logs:", err);
-                        logsContent.innerHTML = '<p style="color:#ef4444;">Error loading logs</p>';
+                        logsContent.textContent = 'Error loading logs';
                     });
             }
 
             loadLogs();
-
             logsRefreshInterval = setInterval(loadLogs, 1000);
         }
 

@@ -74,15 +74,8 @@ func (db *Database) ExecJob(
 
 	j := db.Jobs[name]
 
-	logFields := []any{
-		"name", name,
-		"description", j.Description,
-		"command", j.Config.Command,
-		"cron_expression", j.Config.CronExpression,
-	}
-
-	beforeExec := createBeforeExecCallback(db, j, logger, logFields)
-	afterExec := createAfterExecCallback(db, j, logger, logFields)
+	beforeExec := createBeforeExecCallback(db, name, logger)
+	afterExec := createAfterExecCallback(db, name, logger)
 
 	job := extjob.NewShellJobWithCallbacks(
 		j.Config.Command,
@@ -92,9 +85,7 @@ func (db *Database) ExecJob(
 	)
 
 	go func() {
-		if err := job.Execute(ctx); err != nil {
-			logger.Warn("Error execute command", "error", err)
-		}
+		_ = job.Execute(ctx)
 	}()
 }
 
