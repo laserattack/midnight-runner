@@ -8,6 +8,8 @@ A simple cron-like shell task runner with a web UI
 
 To create a new job or modify an existing one, use the `Add/Edit` button. If you specify the name of an existing job, it will be overwritten; if the name does not exist, a new job will be created
 
+The `Timeout` field specifies the maximum duration the task is allowed to run (if set to 0, no time limit is enforced). If the task exceeds this time, it is terminated. `Max Retries` is the number of times the task will be retried if it fails to complete successfully, and `Retry Interval` is the delay between consecutive retry attempts
+
 ![3](.pics/setjob.png)
 
 Watch logs in real time (`Logs` button)
