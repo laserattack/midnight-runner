@@ -50,7 +50,7 @@ translates to "last weekday of the month".
 
 # Build using Go compiler
 
-In the repo directory run `go build -o <filename>`
+In the repo `src` directory run `go build -o <filename>`
 
 # Build using Docker
 
