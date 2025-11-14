@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/static/dark_styles.css?v={{.RenderTimestamp}}">
 </head>
 <body>
+
     <div class="container">
         <div class="header">
             <h1>
@@ -13,15 +14,15 @@
                 <span id="lastUpdate" class="last-update"></span>
             </h1>
             <h1>
-                <button class="btn" onclick="openSetJobModal()">Add/Edit</button>
-                <button class="btn" onclick="openManageJobModal()">Delete/Exec/Toggle</button>
-                <button class="btn" onclick="openLogsModal()">Logs</button>
+                <button class="btn" onclick="app.setJobModal.open()">Add/Edit</button>
+                <button class="btn" onclick="app.manageJobModal.open()">Delete/Exec/Toggle</button>
+                <button class="btn" onclick="app.logsModal.open()">Logs</button>
             </h1>
         </div>
 
         <div id="setJobModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeSetJobModal()">&times;</span>
+                <span class="close" onclick="app.setJobModal.close()">&times;</span>
                 <h2>Add/Edit</h2>
                 <form id="setJobForm">
                     <div class="form-group">
@@ -58,9 +59,10 @@
                 </form>
             </div>
         </div>
+
         <div id="manageJobModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeManageJobModal()">&times;</span>
+                <span class="close" onclick="app.manageJobModal.close()">&times;</span>
                 <h2>Delete/Exec/Toggle</h2>
                 <form id="manageJobForm">
                     <div class="form-group">
@@ -68,22 +70,24 @@
                         <input type="text" id="manageJobName" name="name" required autocomplete="off">
                     </div>
                     <div class="btn-container">
-                        <button type="button" class="btn" id="cancelBtn" onclick="deleteJobFromModal()">Delete</button>
-                        <button type="button" class="btn" id="execBtn" onclick="execJobFromModal()">Execute</button>
-                        <button type="button" class="btn" id="toggleBtn" onclick="toggleJobFromModal()">Toggle</button>
+                        <button type="button" class="btn" id="cancelBtn" onclick="app.manageJobModal.deleteJob()">Delete</button>
+                        <button type="button" class="btn" id="execBtn" onclick="app.manageJobModal.execJob()">Execute</button>
+                        <button type="button" class="btn" id="toggleBtn" onclick="app.manageJobModal.toggleJob()">Toggle</button>
                     </div>
                 </form>
             </div>
         </div>
+
         <div id="logsModal" class="modal">
-            <div class="modal-content" style="max-width: 700px;">
-                <span class="close" onclick="closeLogsModal()">&times;</span>
+            <div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+                <span class="close" onclick="app.logsModal.close()">&times;</span>
                 <h2>Logs</h2>
-                <div id="logsContent" class="logs-container">
+                <div id="logsContent" class="logs-container" style="flex: 1; overflow-y: auto;">
                     <p>Loading...</p>
                 </div>
             </div>
         </div>
+
         <div id="content" style="display: none;">
             <div class="stats">
                 Total: <span id="totalJobs">0</span> •
@@ -116,283 +120,7 @@
         </div>
     </div>
 
-    <script>
-        let refreshInterval;
-
-        function startAutoRefresh() {
-            function refreshWithHandling() {
-                receiveJSON("/api/get_database")
-                    .then(data => {
-                        updateJobsTable(data);
-                        document.getElementById('lastUpdate').textContent = `Last edit: ${formatTimestamp(data.metadata?.updated_at)}`;
-                        document.getElementById('content').style.display = 'block';
-                        document.getElementById('error').style.display = 'none';
-                    })
-                    .catch(error => {
-                        console.error('Error loading database:', error);
-                        document.getElementById('error').style.display = 'block';
-                        document.getElementById('error').innerHTML = '<p>Failed to load jobs data</p>';
-                        document.getElementById('content').style.display = 'none';
-                    });
-            }
-
-            refreshWithHandling();
-            refreshInterval = setInterval(refreshWithHandling, 1000);
-        }
-
-        function stopAutoRefresh() {
-            clearInterval(refreshInterval);
-        }
-
-        function updateJobsTable(data) {
-
-            const selection = window.getSelection();
-            if (!selection.isCollapsed) {
-                return;
-            }
-
-            const jobs = data.jobs || {};
-            const jobsArray = Object.entries(jobs);
-
-            let enabledCount = 0;
-            let disabledCount = 0;
-
-            jobsArray.forEach(([name, job]) => {
-                if (job.config.status === 'E') {
-                    enabledCount++;
-                } else if (job.config.status === 'D') {
-                    disabledCount++;
-                }
-            });
-
-            document.getElementById('totalJobs').textContent = jobsArray.length;
-            document.getElementById('enabledJobs').textContent = enabledCount;
-            document.getElementById('disabledJobs').textContent = disabledCount;
-
-            const tableBody = document.getElementById('jobsTableBody');
-            tableBody.innerHTML = '';
-
-            if (jobsArray.length === 0) {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').innerHTML = '<p>No jobs configured</p>';
-                document.getElementById('content').style.display = 'none';
-                return;
-            }
-
-            jobsArray.forEach(([name, job]) => {
-                const row = document.createElement('tr');
-                let status;
-                switch(job.config.status) {
-                    case "D":
-                        status = `<span style="color: #939393;"><b>${job.config.status}</b></span>`;
-                        break;
-                    case "E":
-                        status = `<span style="color: #7CB342;"><b>${job.config.status}</b></span>`;
-                        break;
-                    default:
-                        status = `<span style="color: #FFCA29"><b>${job.config.status}</b></span>`;
-                }
-                row.innerHTML = `
-                    <td class="job-name">${name}</td>
-                    <td>${job.type}</td>
-                    <td>${job.description}</td>
-                    <td><code>${job.config.command}</code></td>
-                    <td><code>${job.config.cron_expression}</code></td>
-                    <td>${status}</td>
-                    <td>${job.config.timeout}</td>
-                    <td>${job.config.max_retries}</td>
-                    <td>${job.config.retry_interval}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            document.getElementById('content').style.display = 'block';
-            document.getElementById('error').style.display = 'none';
-        }
-
-        function openSetJobModal() {
-            document.getElementById('setJobModal').style.display = 'block';
-        }
-
-        function closeSetJobModal() {
-            document.getElementById('setJobModal').style.display = 'none';
-            document.getElementById('setJobForm').reset();
-        }
-
-        document.getElementById('setJobForm')
-            .addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const formData = new FormData(this);
-                const jobData = {
-                    name: formData.get('name'),
-                    description: formData.get('description'),
-                    command: formData.get('command'),
-                    cron: formData.get('cron'),
-                    timeout: parseInt(formData.get('timeout')),
-                    maxRetries: parseInt(formData.get('maxRetries')),
-                    retryInterval: parseInt(formData.get('retryInterval'))
-                };
-
-                sendJSON(jobData, "/api/change_job")
-                    .then(() => {
-                        closeSetJobModal();
-                    })
-                    .catch(err => {
-                        console.error("Failed to save job:", err);
-                        alert("Failed to save job");
-                    });
-            });
-
-        function openManageJobModal() {
-            document.getElementById('manageJobModal').style.display = 'block';
-        }
-
-        function closeManageJobModal() {
-            document.getElementById('manageJobModal').style.display = 'none';
-            document.getElementById('manageJobForm').reset();
-        }
-
-        let logsRefreshInterval = null;
-
-        function openLogsModal() {
-            const logsModal = document.getElementById('logsModal');
-            logsModal.style.display = 'block';
-
-            const logsContent = document.getElementById('logsContent');
-            logsContent.innerHTML = '<p>Loading...</p>';
-
-            function loadLogs() {
-                const logsContent = document.getElementById('logsContent');
-
-                const selection = window.getSelection();
-                if (!selection.isCollapsed) {
-                    return;
-                }
-
-                const wasAtBottom = logsContent.scrollHeight - logsContent.scrollTop <= logsContent.clientHeight + 5;
-
-                sendJSON({ count: 100 }, "/api/last_log")
-                    .then(response => response.json())
-                    .then(entries => {
-                        if (entries.length === 0) {
-                            logsContent.textContent = 'No logs available.';
-                            return;
-                        }
-
-                        const lines = entries.map(entry => {
-                            const time = entry.time || '';
-                            const msg = entry.message || '';
-                            const attrsStr = entry.attrs && Object.keys(entry.attrs).length
-                                ? ' ' + JSON.stringify(entry.attrs, null, 0)
-                                : '';
-                            return `${time} — ${msg}${attrsStr}`;
-                        });
-
-                        logsContent.textContent = lines.join('\n\n');
-
-                        if (wasAtBottom) {
-                            logsContent.scrollTop = logsContent.scrollHeight;
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Failed to load logs:", err);
-                        logsContent.textContent = 'Error loading logs';
-                    });
-            }
-
-            loadLogs();
-            logsRefreshInterval = setInterval(loadLogs, 1000);
-        }
-
-        function closeLogsModal() {
-            document.getElementById('logsModal').style.display = 'none';
-            if (logsRefreshInterval) {
-                clearInterval(logsRefreshInterval);
-                logsRefreshInterval = null;
-            }
-        }
-
-        function getJobNameFromModal() {
-            const name = document.getElementById('manageJobName').value.trim();
-            if (!name) {
-                alert("Job name is required");
-                throw new Error("Job name is empty");
-            }
-            return name;
-        }
-
-        function deleteJobFromModal() {
-            try {
-                const name = getJobNameFromModal();
-                sendJSON({ name }, "/api/delete_job")
-                    .then(() => {
-                        closeManageJobModal();
-                    })
-                    .catch(err => {
-                        console.error("Failed to delete job:", err);
-                        alert("Failed to delete job");
-                    });
-            } catch (e) {
-                // alert уже показан
-            }
-        }
-
-        function execJobFromModal() {
-            try {
-                const name = getJobNameFromModal();
-                sendJSON({ name }, "/api/exec_job")
-                    .then(() => {
-                        closeManageJobModal();
-                    })
-                    .catch(err => {
-                        console.error("Failed to exec job:", err);
-                        alert("Failed to execute job");
-                    });
-            } catch (e) {
-                // alert уже показан
-            }
-        }
-
-        function toggleJobFromModal() {
-            try {
-                const name = getJobNameFromModal();
-                sendJSON({ name }, "/api/toggle_job")
-                    .then(() => {
-                        closeManageJobModal();
-                    })
-                    .catch(err => {
-                        console.error("Failed to toggle job:", err);
-                        alert("Failed to toggle job");
-                    });
-            } catch (e) {
-                // alert уже показан
-            }
-        }
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                if (document.getElementById('logsModal').style.display === 'block') {
-                    closeLogsModal();
-                } else if (document.getElementById('setJobModal').style.display === 'block') {
-                    closeSetJobModal();
-                } else if (document.getElementById('manageJobModal').style.display === 'block') {
-                    closeManageJobModal();
-                }
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', startAutoRefresh);
-
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                stopAutoRefresh();
-            } else {
-                startAutoRefresh();
-            }
-        });
-    </script>
-
     <script src="/static/script.js?v={{.RenderTimestamp}}"></script>
+
 </body>
 </html>
