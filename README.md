@@ -54,6 +54,8 @@ In the repo `src` directory run `go build -o <filename>`
 
 # Build using Docker
 
+In the repo root directory
+
 Build:
 
 ```
