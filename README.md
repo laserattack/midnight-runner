@@ -61,7 +61,7 @@ Build:
 ```
 docker build -t mr-builder .
 docker create --name mr-temp mr-builder
-docker cp mr-temp:/app/mr ./mr
+docker cp mr-temp:/app/mr <filename>
 docker rm mr-temp
 ```
 
