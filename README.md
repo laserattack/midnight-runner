@@ -14,7 +14,9 @@ Watch logs in real time (`Logs` button)
 
 ![2](.pics/logs.png)
 
-Also, you can start the task at any time by pressing a button
+You can start the task at any time by pressing the button `Execute`
+
+The task can be started or paused at any time by pressing the `Toggle` button. When paused, it will not run until the `Toggle` button is pressed again
 
 ![4](.pics/managejob.png)
 
