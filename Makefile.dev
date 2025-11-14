@@ -32,10 +32,7 @@ build:
 	cd $(SRC_DIR) && GOOS=dragonfly GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-dragonfly-amd64 .
 	@echo "[INFO] Done!"
 
-all:
-	@$(MAKE) test
-	@$(MAKE) lint
-	@$(MAKE) build
+all: test lint build
 
 clean:
 	rm -rf $(BUILD_DIR)
