@@ -65,7 +65,7 @@ docker cp mr-temp:/app/mr ./mr
 docker rm mr-temp
 ```
 
-Clean up:
+Clean up the artifacts:
 
 ```
 docker rmi mr-builder:latest
