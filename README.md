@@ -14,6 +14,10 @@ Watch logs in real time (`Logs` button)
 
 ![2](.pics/logs.png)
 
+Also, you can start the task at any time by pressing a button
+
+![4](.pics/managejob.png)
+
 # Cron expression format
 
 | Field Name   | Mandatory | Allowed Values  | Allowed Special Characters |
