@@ -158,9 +158,9 @@
             let disabledCount = 0;
 
             jobsArray.forEach(([name, job]) => {
-                if (job.config.status === '💚') {
+                if (job.config.status === 'E') {
                     enabledCount++;
-                } else if (job.config.status === '🩶') {
+                } else if (job.config.status === 'D') {
                     disabledCount++;
                 }
             });
@@ -181,13 +181,24 @@
 
             jobsArray.forEach(([name, job]) => {
                 const row = document.createElement('tr');
+                let status;
+                switch(job.config.status) {
+                    case "D":
+                        status = `<span style="color: #939393;"><b>${job.config.status}</b></span>`;
+                        break;
+                    case "E":
+                        status = `<span style="color: #7CB342;"><b>${job.config.status}</b></span>`;
+                        break;
+                    default:
+                        status = `<span style="color: #FFCA29"><b>${job.config.status}</b></span>`;
+                }
                 row.innerHTML = `
                     <td class="job-name">${name}</td>
                     <td>${job.type}</td>
                     <td>${job.description}</td>
                     <td><code>${job.config.command}</code></td>
                     <td><code>${job.config.cron_expression}</code></td>
-                    <td>${job.config.status}</td>
+                    <td>${status}</td>
                     <td>${job.config.timeout}</td>
                     <td>${job.config.max_retries}</td>
                     <td>${job.config.retry_interval}</td>
@@ -274,10 +285,10 @@
                             let msg = entry.message || '';
 
                             if (msg.includes('Command failed')) {
-                                msg = msg.replace(/Command failed/g, '<span style="color: #ef4444;">Command failed</span>');
+                                msg = msg.replace(/Command failed/g, '<span style="color: #B34242;">Command failed</span>');
                             }
                             if (msg.includes('Command completed successfully')) {
-                                msg = msg.replace(/Command completed successfully/g, '<span style="color: #16a34a;">Command completed successfully</span>');
+                                msg = msg.replace(/Command completed successfully/g, '<span style="color: #7CB342;">Command completed successfully</span>');
                             }
 
                             const attrsStr = entry.attrs && Object.keys(entry.attrs).length

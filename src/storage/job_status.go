@@ -19,13 +19,13 @@ const (
 func (js JobStatus) String() string {
 	switch js {
 	case StatusEnable:
-		return "💚"
+		return "E"
 	case StatusDisable:
-		return "🩶"
+		return "D"
 	case StatusActiveDuringEnable:
-		return "🚀💚"
+		return "AE"
 	case StatusActiveDuringDisable:
-		return "🚀🩶"
+		return "AD"
 	default:
 		return "unknown"
 	}
@@ -42,13 +42,13 @@ func (js *JobStatus) UnmarshalJSON(data []byte) error {
 	}
 
 	switch s {
-	case "💚":
+	case "E":
 		*js = StatusEnable
-	case "🩶":
+	case "D":
 		*js = StatusDisable
-	case "🚀💚":
+	case "AE":
 		*js = StatusActiveDuringEnable
-	case "🚀🩶":
+	case "AD":
 		*js = StatusActiveDuringDisable
 	default:
 		return fmt.Errorf("invalid JobStatus: %s", s)
