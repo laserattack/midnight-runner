@@ -1,18 +1,23 @@
-.PHONY: test lint build-all clean
+.PHONY: test lint build clean all
 
-BINARY_NAME = mr
+BINARY_NAME = midnight-runner
 SRC_DIR = src
 BUILD_DIR = .bin
 
 default: all
 
 test:
+	@echo "\n[INFO] Running tests"
 	cd $(SRC_DIR) && go test -v ./...
+	@echo "[INFO] Done!"
 
 lint:
+	@echo "\n[INFO] Running linter"
 	cd $(SRC_DIR) && golangci-lint run
+	@echo "[INFO] Done!"
 
-build-all:
+build:
+	@echo "\n[INFO] Building for all platforms"
 	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
 	cd $(SRC_DIR) && GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
@@ -25,8 +30,12 @@ build-all:
 	cd $(SRC_DIR) && GOOS=openbsd GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-openbsd-amd64 .
 	cd $(SRC_DIR) && GOOS=netbsd GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-netbsd-amd64 .
 	cd $(SRC_DIR) && GOOS=dragonfly GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-dragonfly-amd64 .
+	@echo "[INFO] Done!"
 
-all: test build-all
+all:
+	@$(MAKE) test
+	@$(MAKE) lint
+	@$(MAKE) build
 
 clean:
 	rm -rf $(BUILD_DIR)
