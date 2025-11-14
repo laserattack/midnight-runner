@@ -267,6 +267,7 @@ func main() {
 			dbSyncFailureCount.Add(1)
 			return
 		}
+		logger.Info("Scheduler is cleared")
 
 		err = storage.RegisterJobs(scheduler, db, logger)
 		if err != nil {
@@ -274,12 +275,14 @@ func main() {
 			dbSyncFailureCount.Add(1)
 			return
 		}
+		logger.Info("Jobs are registered in scheduler")
 
 		if err := db.SaveToFile(dbPath); err != nil {
 			logger.Warn("Save database to file failed", "error", err)
 			dbSyncFailureCount.Add(1)
 			return
 		}
+		logger.Info("Database is saved to file")
 
 		prevUpdatedAt.Store(db.Metadata.UpdatedAt)
 		dbSyncFailureCount.Store(0)
