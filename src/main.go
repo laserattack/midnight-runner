@@ -39,7 +39,6 @@ type flagOpts struct {
 }
 
 //  TODO: Потестить граничные входные данные в полях ввода
-//  TODO: Фильтрацию добавить в модалку с логами
 
 func main() {
 	//  NOTE: Setup logger

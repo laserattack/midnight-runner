@@ -71,7 +71,6 @@ class LogsModal extends Modal {
             clearInterval(this.refreshInterval);
             this.refreshInterval = null;
         }
-        if (this.filterInput) this.filterInput.value = '';
     }
 
     createFilter() {
@@ -130,7 +129,7 @@ class LogsModal extends Modal {
         const filteredLogs = this.allLogs.filter(log => log.searchContent.includes(searchTerm));
         logsContent.textContent = filteredLogs.length
             ? filteredLogs.map(log => log.displayText).join('\n\n')
-            : (searchTerm ? 'No matching logs found.' : 'No logs available.');
+            : (searchTerm ? 'No matching logs found' : 'No logs available');
     }
 }
 
@@ -206,6 +205,7 @@ class JobsTable {
         const refresh = () => {
             ApiClient.receiveJSON("/api/get_database")
                 .then(data => {
+                    if (!window.getSelection().isCollapsed) return;
                     this.update(data);
                     document.getElementById('lastUpdate').textContent = `Last edit: ${DateFormatter.format(data.metadata?.updated_at)}`;
                     this.showContent();
