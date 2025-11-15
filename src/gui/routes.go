@@ -239,7 +239,7 @@ func listHandler(
 			Title           string
 			RenderTimestamp int64
 		}{
-			Title:           "🌙⚙️ Midnight Runner",
+			Title:           "🔧🍄 CronShroom",
 			RenderTimestamp: time.Now().Unix(),
 		}
 

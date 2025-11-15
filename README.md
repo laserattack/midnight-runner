@@ -1,4 +1,4 @@
-# 🌙⚙️ Midnight Runner
+# 🔧🍄 CronShroom
 
 A simple cron-like shell task runner with a web UI
 
@@ -67,16 +67,16 @@ In the repo root directory
 Build:
 
 ```
-docker build -t mr-builder .
-docker create --name mr-temp mr-builder
-docker cp mr-temp:/app/mr <filename>
-docker rm mr-temp
+docker build -t csh-builder .
+docker create --name csh-temp csh-builder
+docker cp csh-temp:/app/csh <filename>
+docker rm csh-temp
 ```
 
 Clean up the artifacts:
 
 ```
-docker rmi mr-builder:latest
+docker rmi csh-builder:latest
 docker rmi golang:1.25.3
 ```
 
