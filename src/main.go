@@ -38,7 +38,6 @@ type flagOpts struct {
 	Cleanup                     bool   `long:"cleanup" description:"Delete all files created by the program in system config directory and shut down"`
 }
 
-// TODO: Favicon
 // TODO: doc files https://github.com/reugn/go-quartz/blob/master/job/doc.go
 
 func main() {
