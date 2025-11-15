@@ -1,4 +1,4 @@
-# CronShroom
+# 🔧🍄 CronShroom
 
 A simple cron-like shell task runner with a web UI
 
