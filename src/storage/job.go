@@ -1,6 +1,10 @@
 package storage
 
-import "time"
+import (
+	"time"
+
+	"github.com/reugn/go-quartz/quartz"
+)
 
 // NOTE: Job structure
 
@@ -8,9 +12,9 @@ type JobConfig struct {
 	Command        string    `json:"command"`
 	CronExpression string    `json:"cron_expression"`
 	Status         JobStatus `json:"status"`
-	Timeout        int       `json:"timeout"`
-	MaxRetries     int       `json:"max_retries"`
-	RetryInterval  int       `json:"retry_interval"`
+	Timeout        uint      `json:"timeout"`
+	MaxRetries     uint      `json:"max_retries"`
+	RetryInterval  uint      `json:"retry_interval"`
 }
 
 type Job struct {
@@ -24,8 +28,12 @@ type Jobs map[string]*Job
 
 func ShellJob(
 	description, command, cronExpression string,
-	timeout, maxRetries, retryInterval int,
-) *Job {
+	timeout, maxRetries, retryInterval uint,
+) (*Job, error) {
+	if err := quartz.ValidateCronExpression(cronExpression); err != nil {
+		return nil, err
+	}
+
 	return &Job{
 		Type:        TypeShell,
 		Description: description,
@@ -40,5 +48,5 @@ func ShellJob(
 		Metadata: Metadata{
 			UpdatedAt: time.Now().Unix(),
 		},
-	}
+	}, nil
 }

@@ -38,8 +38,6 @@ type flagOpts struct {
 	Cleanup                     bool   `long:"cleanup" description:"Delete all files created by the program in system config directory and shut down"`
 }
 
-// TODO: Потестить граничные входные данные в полях ввода
-
 func main() {
 	// NOTE: Setup logger
 

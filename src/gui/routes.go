@@ -186,14 +186,18 @@ func changeJob(
 			}
 		}()
 
-		j := storage.ShellJob(
+		j, err := storage.ShellJob(
 			req.Description,
 			req.Command,
 			req.Cron,
-			int(req.Timeout),
-			int(req.MaxRetries),
-			int(req.RetryInterval),
+			req.Timeout,
+			req.MaxRetries,
+			req.RetryInterval,
 		)
+		if err != nil {
+			logger.Error("Create job error", "error", err)
+			return
+		}
 
 		db.SetJob(j, req.Name)
 	}
@@ -219,9 +223,6 @@ func sendDatabase(
 		}
 	}
 }
-
-// TODO: Должен быть какой то значок в статусе джобы
-// говорящий о том, выполнилась ли она последний раз или нет
 
 func listHandler(
 	logger *slog.Logger,
@@ -257,10 +258,6 @@ func listHandler(
 // a fallback HTTP handler. If template parsing fails,
 // it returns nil for the template and a fallback handler
 // that returns an HTTP 500 error with details about the failure.
-
-// TODO: Тут надо какую то html страничку возвращать красивую
-// с описанием ошибки. Хранить ее можно в константной строке
-// чтобы ничего не парсить
 
 func getTemplateAndFallback(
 	logger *slog.Logger,

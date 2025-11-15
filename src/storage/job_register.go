@@ -56,7 +56,7 @@ func registerShellJob(
 	)
 
 	quartzJobOpts := &quartz.JobDetailOptions{
-		MaxRetries:    maxRetries,
+		MaxRetries:    int(maxRetries),
 		RetryInterval: time.Duration(retryInterval) * time.Second,
 		Replace:       false,
 		Suspended:     false,
