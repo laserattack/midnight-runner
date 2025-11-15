@@ -72,7 +72,7 @@ func main() {
 	HTTPLog := fo.HTTPLog
 	cleanup := fo.Cleanup
 
-	logger.Info("Program started with configuration",
+	logger.Info("Program started with flags",
 		"database", dbPath,
 		"sync-interval", dbSyncInterval,
 		"max-sync-attempts", dbSyncAttemptMaxCount,
