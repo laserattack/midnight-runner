@@ -1,6 +1,6 @@
 # 🔧🍄 CronShroom
 
-A simple cron-like shell task runner with a web UI
+A simple cron-like shell task runner with a web UI, which I made for myself
 
 *mushrooms don't sleep...*
 
