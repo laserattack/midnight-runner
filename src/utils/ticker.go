@@ -3,7 +3,7 @@ package utils
 
 import "time"
 
-//  NOTE: Ticker
+// NOTE: Ticker
 
 func Ticker(
 	fn func(),

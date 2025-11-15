@@ -10,7 +10,7 @@ import (
 	"github.com/reugn/go-quartz/quartz"
 )
 
-//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE DB MUTEX
+// WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE DB MUTEX
 
 func RegisterJobs(
 	// quartz.Scheduler = &StdScheduler, 8 bytes
@@ -89,7 +89,16 @@ func createBeforeExecCallback(
 	return func(ctx context.Context, qj *extjob.ShellJob) {
 		db.Mu.Lock()
 
-		j := db.Jobs[jobKey]
+		j, exists := db.Jobs[jobKey]
+		if !exists {
+			db.Mu.Unlock()
+			logger.Warn(
+				"Cannot execute before exec callback -"+
+					" job not found in database",
+				"name", jobKey,
+			)
+			return
+		}
 
 		description := j.Description
 		command := j.Config.Command
@@ -120,7 +129,16 @@ func createAfterExecCallback(
 	return func(ctx context.Context, qj *extjob.ShellJob) {
 		db.Mu.Lock()
 
-		j := db.Jobs[jobKey]
+		j, exists := db.Jobs[jobKey]
+		if !exists {
+			db.Mu.Unlock()
+			logger.Warn(
+				"Cannot execute after exec callback -"+
+					" job not found in database",
+				"name", jobKey,
+			)
+			return
+		}
 
 		description := j.Description
 		command := j.Config.Command

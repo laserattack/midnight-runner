@@ -2,7 +2,7 @@ package storage
 
 import "time"
 
-//  NOTE: Job structure
+// NOTE: Job structure
 
 type JobConfig struct {
 	Command        string    `json:"command"`

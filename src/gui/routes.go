@@ -220,7 +220,7 @@ func sendDatabase(
 	}
 }
 
-//  TODO: Должен быть какой то значок в статусе джобы
+// TODO: Должен быть какой то значок в статусе джобы
 // говорящий о том, выполнилась ли она последний раз или нет
 
 func listHandler(
@@ -258,7 +258,7 @@ func listHandler(
 // it returns nil for the template and a fallback handler
 // that returns an HTTP 500 error with details about the failure.
 
-//  TODO: Тут надо какую то html страничку возвращать красивую
+// TODO: Тут надо какую то html страничку возвращать красивую
 // с описанием ошибки. Хранить ее можно в константной строке
 // чтобы ничего не парсить
 

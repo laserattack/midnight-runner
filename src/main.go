@@ -38,10 +38,10 @@ type flagOpts struct {
 	Cleanup                     bool   `long:"cleanup" description:"Delete all files created by the program in system config directory and shut down"`
 }
 
-//  TODO: Потестить граничные входные данные в полях ввода
+// TODO: Потестить граничные входные данные в полях ввода
 
 func main() {
-	//  NOTE: Setup logger
+	// NOTE: Setup logger
 
 	logWriter := utils.NewSwappableWriter(os.Stdout)
 	logHandler := utils.NewSlogBufferedHandler(
@@ -50,7 +50,7 @@ func main() {
 	)
 	logger := slog.New(logHandler)
 
-	//  NOTE: Parse args
+	// NOTE: Parse args
 
 	var fo flagOpts
 	parser := flags.NewParser(&fo, flags.Default)
@@ -166,12 +166,12 @@ func main() {
 		return
 	}
 
-	//  NOTE: Setup signal's handler
+	// NOTE: Setup signal's handler
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
-	//  NOTE: Load database
+	// NOTE: Load database
 
 	logger.Info("Loading database", "file", dbPath)
 	db, err := storage.LoadFromFile(dbPath)
@@ -184,12 +184,12 @@ func main() {
 	}
 	logger.Info("Database loaded successfully", "file", dbPath)
 
-	//  NOTE: Setup context
+	// NOTE: Setup context
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	//  NOTE: Setup scheduler
+	// NOTE: Setup scheduler
 
 	scheduler, err := quartz.NewStdScheduler(
 		quartz.WithLogger(qLogger.NewSlogLogger(ctx, logger)),
@@ -206,7 +206,7 @@ func main() {
 		logger.Info("Scheduler stopped")
 	}()
 
-	//  NOTE: Register jobs from db
+	// NOTE: Register jobs from db
 
 	err = storage.RegisterJobs(scheduler, db, logger)
 	if err != nil {
@@ -216,7 +216,7 @@ func main() {
 		return
 	}
 
-	//  NOTE: Memory monitor
+	// NOTE: Memory monitor
 
 	if memStatsInterval != 0 {
 		memMonitorStopChan := utils.Ticker(func() {
@@ -231,7 +231,7 @@ func main() {
 		defer close(memMonitorStopChan)
 	}
 
-	//  NOTE: Save db to file
+	// NOTE: Save db to file
 
 	var dbSyncFailureCount atomic.Uint32
 	var prevUpdatedAt atomic.Int64
@@ -262,6 +262,9 @@ func main() {
 			return
 		}
 
+		// it is important here that if there are any working jobs,
+		// they will not be interrupted, but will be delete
+		// from memory after the end of the work
 		if err = scheduler.Clear(); err != nil {
 			logger.Warn("Scheduler clear failed", "error", err)
 			dbSyncFailureCount.Add(1)
@@ -289,7 +292,7 @@ func main() {
 	}, time.Second*time.Duration(dbSyncInterval))
 	defer close(dbSyncTickerStopChan)
 
-	//  NOTE: Start Web Server
+	// NOTE: Start Web Server
 
 	httpLogger := utils.MaybeLogger(logger, HTTPLog)
 	server := gui.CreateWebServer(
@@ -307,7 +310,7 @@ func main() {
 		}
 	}()
 
-	//  NOTE: Shutdown
+	// NOTE: Shutdown
 
 	{
 		select {

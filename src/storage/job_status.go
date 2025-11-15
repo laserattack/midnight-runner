@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-//  NOTE: Job status type
+// NOTE: Job status type
 
 type JobStatus int
 

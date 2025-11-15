@@ -16,7 +16,7 @@ import (
 // A Mutex for safe operation with a database stored on disk
 var databaseFileMutex sync.RWMutex
 
-//  NOTE: Database, metadata
+// NOTE: Database, metadata
 
 type Metadata struct {
 	UpdatedAt int64 `json:"updated_at"`
@@ -109,7 +109,7 @@ func (db *Database) SetJob(j *Job, k string) {
 	db.Metadata.UpdatedAt = time.Now().Unix()
 }
 
-//  NOTE: Serialize storage structure in byte array
+// NOTE: Serialize storage structure in byte array
 
 func (db *Database) SerializeWithLock() ([]byte, error) {
 	db.Mu.RLock()
@@ -122,7 +122,7 @@ func (db *Database) Serialize() ([]byte, error) {
 	return json.MarshalIndent(db, "", "    ")
 }
 
-//  NOTE: Deserialize byte array in storage structure
+// NOTE: Deserialize byte array in storage structure
 
 func Deserialize(data []byte) (*Database, error) {
 	var db Database
@@ -138,7 +138,7 @@ func Deserialize(data []byte) (*Database, error) {
 	return &db, nil
 }
 
-//  NOTE: Load database from file
+// NOTE: Load database from file
 
 func LoadFromFile(filepath string) (*Database, error) {
 	databaseFileMutex.RLock()
@@ -157,9 +157,9 @@ func LoadFromFile(filepath string) (*Database, error) {
 	return db, nil
 }
 
-//  NOTE: Save database to file
+// NOTE: Save database to file
 
-//  WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE DB MUTEX
+// WARN: BEFORE CALLING THIS, PLS THINK ABOUT TAKE DB MUTEX
 
 func (db *Database) SaveToFile(filepath string) error {
 	databaseFileMutex.Lock()

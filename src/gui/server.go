@@ -35,7 +35,7 @@ func CreateWebServer(
 		logReqMiddleware(httpLogger),
 	)
 
-	//  NOTE: Register routes
+	// NOTE: Register routes
 
 	mux.Handle(
 		"/static/",
@@ -47,7 +47,7 @@ func CreateWebServer(
 	mux.Handle("/", m(rootHandler()))
 	mux.Handle("/list", m(listHandler(logger)))
 
-	//  NOTE: Api routes
+	// NOTE: Api routes
 
 	{
 		mux.Handle("/api/get_database", m(sendDatabase(logger, db)))
