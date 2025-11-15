@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"midnight-runner/storage"
+	"cronshroom/storage"
 )
 
 //go:embed resources/*

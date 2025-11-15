@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"midnight-runner/extjob"
+	"cronshroom/extjob"
 )
 
 // A Mutex for safe operation with a database stored on disk

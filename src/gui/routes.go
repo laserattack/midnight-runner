@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"midnight-runner/storage"
-	"midnight-runner/utils"
+	"cronshroom/storage"
+	"cronshroom/utils"
 )
 
 func rootHandler() http.HandlerFunc {

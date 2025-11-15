@@ -1,6 +1,6 @@
 .PHONY: test lint build clean all
 
-BINARY_NAME = midnight-runner
+BINARY_NAME = cronshroom
 SRC_DIR = src
 BUILD_DIR = .bin
 

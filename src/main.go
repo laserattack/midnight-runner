@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"midnight-runner/gui"
-	"midnight-runner/storage"
-	"midnight-runner/utils"
+	"cronshroom/gui"
+	"cronshroom/storage"
+	"cronshroom/utils"
 
 	"github.com/jessevdk/go-flags"
 	qLogger "github.com/reugn/go-quartz/logger"
@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	defaultDatabaseName = "midnight-runner-database.json"
-	defaultLogFileName  = "midnight-runner-log"
+	defaultDatabaseName = "cronshroom-database.json"
+	defaultLogFileName  = "cronshroom-log"
 )
 
 type flagOpts struct {

@@ -1,4 +1,4 @@
-module midnight-runner
+module cronshroom
 
 go 1.25.1
 
