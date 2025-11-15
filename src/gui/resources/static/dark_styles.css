@@ -1,3 +1,7 @@
+:root {
+    --accent-color: #8E7C60;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -30,7 +34,7 @@ body {
     }
 
     a {
-        color: #4f46e5;
+        color: var(--accent-color);
         text-decoration: none;
     }
 }
@@ -69,7 +73,7 @@ body {
     }
 
     thead {
-        background: #4f46e5;
+        background: var(--accent-color);
         color: white;
     }
 
@@ -157,7 +161,7 @@ body {
         transition: all 0.2s ease;
 
         &:hover {
-            color: #94a3b8;
+            filter: brightness(0.6);
         }
     }
 }
@@ -196,7 +200,7 @@ body {
 
         &:focus {
             outline: none;
-            border-color: #4f46e5;
+            border-color: var(--accent-color);
         }
     }
 }
@@ -212,7 +216,7 @@ body {
 
     &:focus {
         outline: none;
-        border-color: #4f46e5;
+        border-color: var(--accent-color);
     }
 }
 
@@ -237,46 +241,31 @@ body {
     transition: all 0.2s ease;
 
     &:hover {
-        background: #374151;
+        filter: brightness(0.8);
     }
 
     &[type="submit"] {
-        background: #4f46e5;
+        background: var(--accent-color);
         color: white;
-        &:hover {
-            background: #4338ca;
-        }
     }
 
     &[type="button"] {
         background: #64748b;
         color: white;
-        &:hover {
-            background: #475569;
-        }
     }
 
     &#cancelBtn {
         background: #ef4444;
         color: white;
-        &:hover {
-            background: #dc2626;
-        }
     }
 
     &#execBtn {
-        background: #4f46e5;
+        background: var(--accent-color);
         color: white;
-        &:hover {
-            background: #4338ca;
-        }
     }
 
     &#toggleBtn {
-        background: #4f46e5;
+        background: var(--accent-color);
         color: white;
-        &:hover {
-            background: #4338ca;
-        }
     }
 }
