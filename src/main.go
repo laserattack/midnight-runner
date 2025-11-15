@@ -305,6 +305,7 @@ func main() {
 		err := server.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			logger.Error("Web server error", "error", err)
+			cancel()
 		}
 	}()
 
