@@ -40,6 +40,7 @@ func lastLog(
 
 		type LogEntry struct {
 			Time    string         `json:"time"`
+			Level   string         `json:"level"`
 			Message string         `json:"message"`
 			Attrs   map[string]any `json:"attrs,omitempty"`
 		}
@@ -62,6 +63,7 @@ func lastLog(
 
 				entries[i] = LogEntry{
 					Time:    rec.Time.Format("2006-01-02T15:04:05.000Z07:00"),
+					Level:   rec.Level.String(),
 					Message: rec.Message,
 					Attrs:   attrs,
 				}

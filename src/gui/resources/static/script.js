@@ -109,8 +109,8 @@ class LogsModal extends Modal {
                 }
 
                 this.allLogs = entries.map(entry => ({
-                    displayText: `${entry.time || ''} — ${entry.message || ''}${entry.attrs ? ' ' + JSON.stringify(entry.attrs, null, 0) : ''}`,
-                    searchContent: `${entry.time || ''} — ${entry.message || ''}${entry.attrs ? ' ' + JSON.stringify(entry.attrs, null, 0) : ''}`.toLowerCase()
+                    displayText: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${entry.attrs ? ' ' + JSON.stringify(entry.attrs, null, 0) : ''}`,
+                    searchContent: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${entry.attrs ? ' ' + JSON.stringify(entry.attrs, null, 0) : ''}`.toLowerCase()
                 }));
 
                 this.updateLogsDisplay();
