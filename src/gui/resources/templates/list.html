@@ -41,8 +41,11 @@
                         <input type="text" name="command" required>
                     </div>
                     <div class="form-group">
-                        <label>Cron:</label>
-                        <input type="text" name="cron" required>
+                        <label>
+                            Cron:
+                            <span id="cronDescription"></span>
+                        </label>
+                        <input type="text" name="cron" value="0 */2 * * * *" required>
                     </div>
                     <div class="form-group">
                         <label>Timeout (sec):</label>
@@ -123,6 +126,7 @@
         </div>
     </div>
 
+    <script src="/static/cronstrue.min.js?v={{.RenderTimestamp}}" async></script>
     <script src="/static/script.js?v={{.RenderTimestamp}}"></script>
 </body>
 </html>

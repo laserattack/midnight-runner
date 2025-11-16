@@ -288,6 +288,46 @@ class SetJobModal extends Modal {
         super('setJobModal');
     }
 
+    updateCronDescription(cronExpression) {
+        const descriptionElement = document.getElementById('cronDescription');
+        
+        if (!cronExpression || cronExpression.trim() === '') {
+            descriptionElement.textContent = '';
+            return;
+        }
+
+        const parts = cronExpression.trim().split(/\s+/);
+        if (parts.length !== 6) {
+            descriptionElement.textContent = '(Invalid cron expression)';
+            return;
+        }
+
+        try {
+            const description = cronstrue.toString(cronExpression, {
+                throwExceptionOnParseError: true
+            });
+            descriptionElement.textContent = `(${description})`;
+        } catch (error) {
+            descriptionElement.textContent = '(Invalid cron expression)';
+        }
+    }
+
+    open() {
+        super.open();
+        document.getElementById('setJobForm').reset();
+        
+        const descriptionElement = document.getElementById('cronDescription');
+        descriptionElement.textContent = '';
+        
+        const cronInput = document.querySelector('input[name="cron"]');
+        
+        cronInput.addEventListener('input', (e) => {
+            this.updateCronDescription(e.target.value);
+        });
+        
+        this.updateCronDescription(cronInput.value);
+    }
+
     attachSubmitHandler() {
         document.getElementById('setJobForm').addEventListener('submit', (e) => {
             e.preventDefault();

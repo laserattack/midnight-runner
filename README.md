@@ -106,3 +106,4 @@ docker rmi golang:1.25.3
 
 - [github.com/jessevdk/go-flags](https://github.com/jessevdk/go-flags)
 - [github.com/reugn/go-quartz](https://github.com/reugn/go-quartz)
+- [github.com/bradymholt/cRonstrue](https://github.com/bradymholt/cRonstrue)
