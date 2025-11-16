@@ -16,7 +16,7 @@ The `Timeout` field specifies the maximum duration the task is allowed to run (i
 
 Watch logs in real time (`Logs` button)
 
-![2](.pics/logs.png)
+![2](.pics/log.png)
 
 You can start the task at any time by pressing the button `Execute`
 
