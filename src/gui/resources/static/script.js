@@ -244,7 +244,6 @@ class ManageJobModal extends Modal {
     getJobName() {
         const name = document.getElementById('manageJobName').value.trim();
         if (!name) {
-            alert("Job name is required");
             throw new Error("Job name is empty");
         }
         return name;
@@ -257,7 +256,6 @@ class ManageJobModal extends Modal {
                 .then(() => this.close())
                 .catch(err => {
                     console.error("Failed to delete job:", err);
-                    alert("Failed to delete job");
                 });
         } catch (e) {}
     }
@@ -269,7 +267,6 @@ class ManageJobModal extends Modal {
                 .then(() => this.close())
                 .catch(err => {
                     console.error("Failed to exec job:", err);
-                    alert("Failed to execute job");
                 });
         } catch (e) {}
     }
@@ -281,7 +278,6 @@ class ManageJobModal extends Modal {
                 .then(() => this.close())
                 .catch(err => {
                     console.error("Failed to toggle job:", err);
-                    alert("Failed to toggle job");
                 });
         } catch (e) {}
     }
@@ -310,7 +306,6 @@ class SetJobModal extends Modal {
                 .then(() => this.close())
                 .catch(err => {
                     console.error("Failed to save job:", err);
-                    alert("Failed to save job");
                 });
         });
     }
