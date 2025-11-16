@@ -26,6 +26,22 @@ The task can be started or paused at any time by pressing the `Toggle` button. W
 
 ![4](.pics/managejob.png)
 
+# Command line options
+
+Run with flag `-h` to see all available options:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-d, --database` | Path to the database file | in system config directory |
+| `-p, --port` | Web server port | 3777 |
+| `--sync-interval` | Database sync interval in seconds | 1 |
+| `--max-sync-attempts` | Max consecutive database sync attempts before shutdown | 10 |
+| `--server-shutdown-timeout` | The time in seconds that the web server gives all connections to complete before it terminates them harshly | 10 |
+| `--mem-stats-interval` | Interval in seconds for logging memory statistics (for leak detection). It also causes garbage collection. Disable - 0 value | 1800 |
+| `--http-log` | Log messages about HTTP connections | false |
+| `--log-file-max-size` | Log file max size in bytes (if the max size is reached the file will be overwritten) | 10485760 |
+| `--cleanup` | Delete all files created by the program in system config directory and shut down | false |
+
 # Cron expression format
 
 | Field Name   | Mandatory | Allowed Values  | Allowed Special Characters |
