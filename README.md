@@ -16,7 +16,7 @@ The `Timeout` field specifies the maximum duration the task is allowed to run (i
 
 Watch logs in real time (`Logs` button)
 
-There are three types of logs: INFO, WARN, ERROR
+There are three types of logs: `INFO`, `WARN`, `ERROR`
 
 ![2](.pics/log.png)
 
