@@ -97,7 +97,6 @@ func main() {
 	}
 
 	//
-
 	logFilePath, err := utils.ResolveFileInDefaultConfigDir(
 		defaultLogFileName,
 		func(fullPath string) error {
@@ -107,6 +106,7 @@ func main() {
 	if err != nil {
 		logger.Warn("Failed to resolve log file path", "error", err)
 	} else if !cleanup {
+		logger.Info("Loading log file", "file", logFilePath)
 		logFile, err := utils.OpenLogFile(
 			logFilePath,
 			int64(logFileMaxSizeBytes),
@@ -117,6 +117,7 @@ func main() {
 				"error", err,
 			)
 		} else {
+			logger.Info("Log file loaded successfully", "file", logFilePath)
 			logWriter.Set(io.MultiWriter(os.Stdout, logFile))
 			defer func() {
 				if err := logFile.Close(); err != nil {

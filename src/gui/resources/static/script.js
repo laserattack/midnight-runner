@@ -62,6 +62,14 @@ class LogsModal extends Modal {
         super.open();
         this.createFilter();
         this.loadLogs();
+
+        setTimeout(() => {
+            const logsContent = document.getElementById('logsContent');
+            if (logsContent) {
+                logsContent.scrollTop = logsContent.scrollHeight;
+            }
+        }, 0);
+
         this.refreshInterval = setInterval(() => this.loadLogs(), 1000);
     }
 
