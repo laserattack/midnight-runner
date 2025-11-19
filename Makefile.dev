@@ -1,4 +1,4 @@
-.PHONY: test lint build clean all
+.PHONY: test lint build clean all build-linux-amd64 build-linux-arm64 build-windows-amd64 build-windows-arm64 build-macos-amd64 build-macos-arm64 build-freebsd-amd64 build-freebsd-arm64 build-openbsd-amd64 build-netbsd-amd64 build-dragonfly-amd64
 
 BINARY_NAME = cronshroom
 SRC_DIR = src
@@ -16,21 +16,63 @@ lint:
 	cd $(SRC_DIR) && golangci-lint run
 	@echo "[INFO] Done!"
 
-build:
-	@echo "\n[INFO] Building for all platforms"
+build-linux-amd64:
+	@echo "\n[INFO] Building for linux/amd64"
 	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
+
+build-linux-arm64:
+	@echo "\n[INFO] Building for linux/arm64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
+
+build-windows-amd64:
+	@echo "\n[INFO] Building for windows/amd64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+
+build-windows-arm64:
+	@echo "\n[INFO] Building for windows/arm64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-windows-arm64.exe .
+
+build-macos-amd64:
+	@echo "\n[INFO] Building for macos/amd64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-macos-amd64 .
+
+build-macos-arm64:
+	@echo "\n[INFO] Building for macos/arm64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-macos-arm64 .
+
+build-freebsd-amd64:
+	@echo "\n[INFO] Building for freebsd/amd64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-freebsd-amd64 .
+
+build-freebsd-arm64:
+	@echo "\n[INFO] Building for freebsd/arm64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=freebsd GOARCH=arm64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-freebsd-arm64 .
+
+build-openbsd-amd64:
+	@echo "\n[INFO] Building for openbsd/amd64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=openbsd GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-openbsd-amd64 .
+
+build-netbsd-amd64:
+	@echo "\n[INFO] Building for netbsd/amd64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=netbsd GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-netbsd-amd64 .
+
+build-dragonfly-amd64:
+	@echo "\n[INFO] Building for dragonfly/amd64"
+	@mkdir -p $(BUILD_DIR)
 	cd $(SRC_DIR) && GOOS=dragonfly GOARCH=amd64 CGO_ENABLED=0 go build -o ../$(BUILD_DIR)/$(BINARY_NAME)-dragonfly-amd64 .
-	@echo "[INFO] Done!"
+
+build: build-linux-amd64 build-linux-arm64 build-windows-amd64 build-windows-arm64 build-macos-amd64 build-macos-arm64 build-freebsd-amd64 build-freebsd-arm64 build-openbsd-amd64 build-netbsd-amd64 build-dragonfly-amd64
+	@echo "[INFO] All builds completed!"
 
 all: test lint build
 
