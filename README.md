@@ -4,7 +4,7 @@ A simple cron-like shell task runner with a web UI
 
 *mushrooms don't sleep...* 🔧🍄
 
-![1](.pics/base.png)
+![1](.pics/base1.png)
 
 # Manage
 
