@@ -57,6 +57,11 @@ body {
     & #disabledJobs {
         color: #939393;
     }
+
+    & #activeJobs {
+        color: #FFCA29;
+    }
+
 }
 
 .jobs-table {

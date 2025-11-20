@@ -152,15 +152,18 @@ class JobsTable {
         const jobs = data.jobs || {};
         const jobsArray = Object.entries(jobs);
 
-        let enabled = 0, disabled = 0;
+        let enabled = 0, disabled = 0, active = 0;
         jobsArray.forEach(([_, job]) => {
             if (job.config.status === 'E') enabled++;
             else if (job.config.status === 'D') disabled++;
+            else if (job.config.status === "AE") active++;
+            else if (job.config.status === "AD") active++;
         });
 
         document.getElementById('totalJobs').textContent = jobsArray.length;
         document.getElementById('enabledJobs').textContent = enabled;
         document.getElementById('disabledJobs').textContent = disabled;
+        document.getElementById('activeJobs').textContent = active;
 
         const tbody = document.getElementById('jobsTableBody');
         tbody.innerHTML = '';
