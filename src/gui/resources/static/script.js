@@ -107,28 +107,40 @@ class LogsModal extends Modal {
 
         const wasAtBottom = logsContent.scrollHeight - logsContent.scrollTop <= logsContent.clientHeight + 5;
 
-        ApiClient.sendJSON({ count: 1000 }, "/api/last_log")
-            .then(response => response.json())
-            .then(entries => {
-                if (entries.length === 0) {
-                    this.allLogs = [];
-                    this.updateLogsDisplay();
-                    return;
+ApiClient.sendJSON({ count: 1000 }, "/api/last_log")
+    .then(response => response.json())
+    .then(entries => {
+        if (entries.length === 0) {
+            this.allLogs = [];
+            this.updateLogsDisplay();
+            return;
+        }
+
+        this.allLogs = entries.map(entry => {
+            let attrsText = '';
+            if (entry.attrs) {
+                const rawAttrs = JSON.stringify(entry.attrs, null, 0);
+                if (rawAttrs.length > 1000) {
+                    attrsText = ' {too big! see log file}';
+                } else {
+                    attrsText = ' ' + rawAttrs;
                 }
+            }
 
-                this.allLogs = entries.map(entry => ({
-                    displayText: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${entry.attrs ? ' ' + JSON.stringify(entry.attrs, null, 0) : ''}`,
-                    searchContent: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${entry.attrs ? ' ' + JSON.stringify(entry.attrs, null, 0) : ''}`.toLowerCase()
-                }));
+            return {
+                displayText: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${attrsText}`,
+                searchContent: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${attrsText}`.toLowerCase()
+            };
+        });
 
-                this.updateLogsDisplay();
+        this.updateLogsDisplay();
 
-                if (wasAtBottom) logsContent.scrollTop = logsContent.scrollHeight;
-            })
-            .catch(err => {
-                console.error("Failed to load logs:", err);
-                logsContent.textContent = 'Error loading logs';
-            });
+        if (wasAtBottom) logsContent.scrollTop = logsContent.scrollHeight;
+    })
+    .catch(err => {
+        console.error("Failed to load logs:", err);
+        logsContent.textContent = 'Error loading logs';
+    });
     }
 
     updateLogsDisplay() {
