@@ -154,8 +154,8 @@ func createAfterExecCallback(
 		db.Mu.Unlock()
 
 		status := qj.JobStatus()
-		stdout := utils.TruncateString(qj.Stdout(), 500)
-		stderr := utils.TruncateString(qj.Stderr(), 500)
+		stdout := qj.Stdout()
+		stderr := qj.Stderr()
 
 		switch status {
 		case extjob.StatusOK:
