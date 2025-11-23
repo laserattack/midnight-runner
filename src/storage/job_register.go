@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cronshroom/extjob"
+	"cronshroom/utils"
 
 	"github.com/reugn/go-quartz/quartz"
 )
@@ -153,6 +154,8 @@ func createAfterExecCallback(
 		db.Mu.Unlock()
 
 		status := qj.JobStatus()
+		stdout := utils.TruncateString(qj.Stdout(), 500)
+		stderr := utils.TruncateString(qj.Stderr(), 500)
 
 		switch status {
 		case extjob.StatusOK:
@@ -161,8 +164,8 @@ func createAfterExecCallback(
 				"description", description,
 				"command", command,
 				"cron_expression", cronExpression,
-				"Stdout", qj.Stdout(),
-				"Stderr", qj.Stderr(),
+				"Stdout", stdout,
+				"Stderr", stderr,
 			)
 		case extjob.StatusFailure:
 			logger.Warn("Command failed",
@@ -170,8 +173,8 @@ func createAfterExecCallback(
 				"description", description,
 				"command", command,
 				"cron_expression", cronExpression,
-				"Stdout", qj.Stdout(),
-				"Stderr", qj.Stderr(),
+				"Stdout", stdout,
+				"Stderr", stderr,
 			)
 		}
 	}
