@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"cronshroom/extjob"
-	"cronshroom/utils"
 
 	"github.com/reugn/go-quartz/quartz"
 )
