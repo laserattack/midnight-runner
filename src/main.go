@@ -46,7 +46,7 @@ func main() {
 	logWriter := utils.NewSwappableWriter(os.Stdout)
 	logHandler := utils.NewSlogBufferedHandler(
 		slog.NewTextHandler(logWriter, nil),
-		1000,
+		100,
 	)
 	logger := slog.New(logHandler)
 

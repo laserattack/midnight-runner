@@ -107,7 +107,7 @@ class LogsModal extends Modal {
 
         const wasAtBottom = logsContent.scrollHeight - logsContent.scrollTop <= logsContent.clientHeight + 5;
 
-ApiClient.sendJSON({ count: 1000 }, "/api/last_log")
+ApiClient.sendJSON({ count: 100 }, "/api/last_log")
     .then(response => response.json())
     .then(entries => {
         if (entries.length === 0) {
