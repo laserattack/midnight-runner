@@ -22,22 +22,6 @@ func lastLog(
 	logger *slog.Logger,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			Count uint `json:"count"`
-		}
-
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			logger.Error("Error decode lastLog json data", "error", err)
-			return
-		}
-
-		defer func() {
-			if err = r.Body.Close(); err != nil {
-				logger.Error("Failed to close request body", "error", err)
-			}
-		}()
-
 		type LogEntry struct {
 			Time    string         `json:"time"`
 			Level   string         `json:"level"`
@@ -46,7 +30,7 @@ func lastLog(
 		}
 
 		if bh, ok := logger.Handler().(*utils.SlogBufferedHandler); ok {
-			records := bh.GetLastRecords(int(req.Count))
+			records := bh.GetLastRecords(100)
 			entries := make([]LogEntry, len(records))
 
 			for i, rec := range records {
@@ -80,6 +64,7 @@ func lastLog(
 			}
 		} else {
 			logger.Error("Logger handler is not a SlogBufferedHandler")
+			http.Error(w, "Logger handler is not a SlogBufferedHandler", http.StatusInternalServerError)
 			return
 		}
 	}

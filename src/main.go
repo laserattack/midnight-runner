@@ -39,6 +39,8 @@ type flagOpts struct {
 }
 
 // TODO: doc files https://github.com/reugn/go-quartz/blob/master/job/doc.go
+// TODO: максимальный размер записи в лог должно быть можно задавать флагом
+// TODO: максимальое количество записей в буффере логгера должно быть можно задавать флагом
 
 func main() {
 	// NOTE: Setup logger

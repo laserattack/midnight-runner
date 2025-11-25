@@ -107,40 +107,39 @@ class LogsModal extends Modal {
 
         const wasAtBottom = logsContent.scrollHeight - logsContent.scrollTop <= logsContent.clientHeight + 5;
 
-ApiClient.sendJSON({ count: 100 }, "/api/last_log")
-    .then(response => response.json())
-    .then(entries => {
-        if (entries.length === 0) {
-            this.allLogs = [];
-            this.updateLogsDisplay();
-            return;
-        }
-
-        this.allLogs = entries.map(entry => {
-            let attrsText = '';
-            if (entry.attrs) {
-                const rawAttrs = JSON.stringify(entry.attrs, null, 0);
-                if (rawAttrs.length > 1000) {
-                    attrsText = ' {too big! see log file}';
-                } else {
-                    attrsText = ' ' + rawAttrs;
-                }
+    ApiClient.receiveJSON("/api/last_log")
+        .then(entries => {
+            if (entries.length === 0) {
+                this.allLogs = [];
+                this.updateLogsDisplay();
+                return;
             }
 
-            return {
-                displayText: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${attrsText}`,
-                searchContent: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${attrsText}`.toLowerCase()
-            };
+            this.allLogs = entries.map(entry => {
+                let attrsText = '';
+                if (entry.attrs) {
+                    const rawAttrs = JSON.stringify(entry.attrs, null, 0);
+                    if (rawAttrs.length > 1000) {
+                        attrsText = ' {too big! see log file}';
+                    } else {
+                        attrsText = ' ' + rawAttrs;
+                    }
+                }
+
+                return {
+                    displayText: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${attrsText}`,
+                    searchContent: `${entry.time || ''} — ${entry.level || ''} — ${entry.message || ''}${attrsText}`.toLowerCase()
+                };
+            });
+
+            this.updateLogsDisplay();
+
+            if (wasAtBottom) logsContent.scrollTop = logsContent.scrollHeight;
+        })
+        .catch(err => {
+            console.error("Failed to load logs:", err);
+            logsContent.textContent = 'Error loading logs';
         });
-
-        this.updateLogsDisplay();
-
-        if (wasAtBottom) logsContent.scrollTop = logsContent.scrollHeight;
-    })
-    .catch(err => {
-        console.error("Failed to load logs:", err);
-        logsContent.textContent = 'Error loading logs';
-    });
     }
 
     updateLogsDisplay() {
