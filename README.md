@@ -34,6 +34,7 @@ Run with flag `-h` to see all available options:
 |--------|-------------|---------|
 | `-d, --database` | Path to the database file | in system config directory |
 | `-p, --port` | Web server port | 3777 |
+| `-l, --web-log-max` | Maximum log entries to show in web interface | 100 |
 | `--sync-interval` | Database sync interval in seconds | 1 |
 | `--max-sync-attempts` | Max consecutive database sync attempts before shutdown | 10 |
 | `--server-shutdown-timeout` | The time in seconds that the web server gives all connections to complete before it terminates them harshly | 10 |
