@@ -39,7 +39,7 @@ type SlogBufferedHandler struct {
 	slog.Handler
 	mu         sync.RWMutex
 	buffer     []slog.Record
-	maxRecords int
+	MaxRecords int
 }
 
 func NewSlogBufferedHandler(
@@ -49,7 +49,7 @@ func NewSlogBufferedHandler(
 	return &SlogBufferedHandler{
 		Handler:    h,
 		buffer:     make([]slog.Record, 0, maxRecords),
-		maxRecords: maxRecords,
+		MaxRecords: maxRecords,
 	}
 }
 
@@ -58,7 +58,7 @@ func (bh *SlogBufferedHandler) Handle(
 	r slog.Record,
 ) error {
 	bh.mu.Lock()
-	if len(bh.buffer) >= bh.maxRecords {
+	if len(bh.buffer) >= bh.MaxRecords {
 		bh.buffer = bh.buffer[1:]
 	}
 	bh.buffer = append(bh.buffer, r.Clone())

@@ -30,7 +30,9 @@ func lastLog(
 		}
 
 		if bh, ok := logger.Handler().(*utils.SlogBufferedHandler); ok {
-			records := bh.GetLastRecords(100)
+			webLogMaxEntries := logger.Handler().(*utils.SlogBufferedHandler).MaxRecords
+
+			records := bh.GetLastRecords(webLogMaxEntries)
 			entries := make([]LogEntry, len(records))
 
 			for i, rec := range records {

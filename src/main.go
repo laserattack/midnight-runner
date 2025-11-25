@@ -29,6 +29,7 @@ const (
 type flagOpts struct {
 	DatabasePath                string `short:"d" long:"database" description:"Path to the database file (default: in system config directory)"`
 	WebServerPort               uint16 `short:"p" long:"port" description:"Web server port" default:"3777"`
+	WebLogMaxEntries            uint   `short:"l" long:"web-log-max" description:"Maximum log entries to show in web interface" default:"100"`
 	DatabaseSyncInterval        uint   `long:"sync-interval" description:"Database sync interval in seconds" default:"1"`
 	DatabaseSyncAttemptMaxCount uint32 `long:"max-sync-attempts" description:"Max consecutive database sync attempts before shutdown" default:"10"`
 	WebServerShutdownTimeout    uint   `long:"server-shutdown-timeout" description:"The time in seconds that the web server gives all connections to complete before it terminates them harshly" default:"10"`
@@ -39,19 +40,8 @@ type flagOpts struct {
 }
 
 // TODO: doc files https://github.com/reugn/go-quartz/blob/master/job/doc.go
-// TODO: максимальный размер записи в лог должно быть можно задавать флагом
-// TODO: максимальое количество записей в буффере логгера должно быть можно задавать флагом
 
 func main() {
-	// NOTE: Setup logger
-
-	logWriter := utils.NewSwappableWriter(os.Stdout)
-	logHandler := utils.NewSlogBufferedHandler(
-		slog.NewTextHandler(logWriter, nil),
-		100,
-	)
-	logger := slog.New(logHandler)
-
 	// NOTE: Parse args
 
 	var fo flagOpts
@@ -62,12 +52,16 @@ func main() {
 		if _, ok := err.(*flags.Error); ok {
 			return
 		}
-		logger.Error("Failed to parse command line flags", "error", err)
+		slog.New(slog.NewTextHandler(os.Stdout, nil)).Error(
+			"Failed to parse command line flags",
+			"error", err,
+		)
 		return
 	}
 
 	logFileMaxSizeBytes := fo.LogFileMaxSizeBytes
 	dbPath := fo.DatabasePath
+	webLogMaxEntries := fo.WebLogMaxEntries
 	dbSyncInterval := fo.DatabaseSyncInterval
 	dbSyncAttemptMaxCount := fo.DatabaseSyncAttemptMaxCount
 	webServerPort := fmt.Sprint(fo.WebServerPort)
@@ -76,11 +70,28 @@ func main() {
 	HTTPLog := fo.HTTPLog
 	cleanup := fo.Cleanup
 
+	if webLogMaxEntries == 0 {
+		slog.New(slog.NewTextHandler(os.Stdout, nil)).Error(
+			"Maximum log entries to show in web interface must be positive",
+		)
+		return
+	}
+
+	// NOTE: Setup logger
+
+	logWriter := utils.NewSwappableWriter(os.Stdout)
+	logHandler := utils.NewSlogBufferedHandler(
+		slog.NewTextHandler(logWriter, nil),
+		int(webLogMaxEntries),
+	)
+	logger := slog.New(logHandler)
+
 	logger.Info("Program started with flags",
 		"database", dbPath,
+		"port", webServerPort,
+		"web-log-max", webLogMaxEntries,
 		"sync-interval", dbSyncInterval,
 		"max-sync-attempts", dbSyncAttemptMaxCount,
-		"port", webServerPort,
 		"server-shutdown-timeout", webServerShutdownTimeout,
 		"mem-stats-interval", memStatsInterval,
 		"http-log", HTTPLog,

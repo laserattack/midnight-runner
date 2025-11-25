@@ -119,11 +119,7 @@ class LogsModal extends Modal {
                 let attrsText = '';
                 if (entry.attrs) {
                     const rawAttrs = JSON.stringify(entry.attrs, null, 0);
-                    if (rawAttrs.length > 1000) {
-                        attrsText = ' {too big! see log file}';
-                    } else {
-                        attrsText = ' ' + rawAttrs;
-                    }
+                    attrsText = ' ' + rawAttrs;
                 }
 
                 return {
